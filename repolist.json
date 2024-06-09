@@ -1,0 +1,14 @@
+
+{
+    "comfy": {
+        "url": "https://github.com/comfyanonymous/ComfyUI.git",
+        "dir": "repo/ComfyUI",
+        "commit": "cb8d0ebccc93d3df6e00da1a57718a86d3dde300"
+    },
+    "comfy2python": {
+        "name": "comfy2python",
+        "url": "https://github.com/pydn/ComfyUI-to-Python-Extension.git",
+        "dir": "repo/ComfyUI-to-Python-Extension",
+        "commit": "a1d651b61d30ad81daf0ff92d7c0873247514d0d"
+    }
+}
