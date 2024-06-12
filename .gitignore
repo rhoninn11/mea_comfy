@@ -2,3 +2,4 @@ repo
 fs
 __pycache__
 .vscode
+tmp

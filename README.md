@@ -3,7 +3,7 @@
 
 Simple script for wraping comfy ui workflows for future usage as a micro services with gRPC interface
 
-![image from assets](assets/img.png)
+![image from assets](assets/inpaint_steps.png)
 
 #### setting environment:
 ```
