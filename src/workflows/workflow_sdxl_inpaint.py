@@ -62,14 +62,19 @@ from nodes import (
     CLIPTextEncode,
 )
 
+UNET = 0
+CLIP = 1
+VAE = 2
 
-def comfy_ui_workflow():
+def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str):
+# def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str):
     import_custom_nodes()
     with torch.inference_mode():
         checkpointloadersimple = CheckpointLoaderSimple()
-        checkpointloadersimple_4 = checkpointloadersimple.load_checkpoint(
+        basic_checkpoint = checkpointloadersimple.load_checkpoint(
             ckpt_name="photopediaXL_45.safetensors"
         )
+        unet, clip, vae = basic_checkpoint
 
         emptylatentimage = EmptyLatentImage()
         emptylatentimage_5 = emptylatentimage.generate(
@@ -77,33 +82,35 @@ def comfy_ui_workflow():
         )
 
         loraloader = LoraLoader()
-        loraloader_22 = loraloader.load_lora(
+        model_with_offset = loraloader.load_lora(
             lora_name="sd_xl_offset_example-lora_1.0.safetensors",
             strength_model=1,
             strength_clip=1,
-            model=get_value_at_index(checkpointloadersimple_4, 0),
-            clip=get_value_at_index(checkpointloadersimple_4, 1),
+            model=unet,
+            clip=clip,
         )
+        unet, clip = model_with_offset
 
-        loraloader_21 = loraloader.load_lora(
+        model_but_faster = loraloader.load_lora(
             lora_name="Hyper-SDXL-12steps-CFG-lora.safetensors",
             strength_model=1,
             strength_clip=1,
-            model=get_value_at_index(loraloader_22, 0),
-            clip=get_value_at_index(loraloader_22, 1),
+            model=unet,
+            clip=clip,
         )
+        unet, clip = model_but_faster
 
         cliptextencode = CLIPTextEncode()
-        prompt_text = "a forester in the slavic style"
+        prompt_text = in_prmpt
 
-        cliptextencode_6 = cliptextencode.encode(
+        positive = cliptextencode.encode(
             text=prompt_text,
-            clip=get_value_at_index(loraloader_21, 1),
+            clip=clip,
         )
 
-        cliptextencode_7 = cliptextencode.encode(
+        negative = cliptextencode.encode(
             text="text, watermark, look too perfect",
-            clip=get_value_at_index(loraloader_21, 1),
+            clip=clip,
         )
 
         brushnetloader = NODE_CLASS_MAPPINGS["BrushNetLoader"]()
@@ -116,30 +123,28 @@ def comfy_ui_workflow():
             image="clipspace/clipspace-mask-80537.png [input]"
         )
 
-        mask = loadimage_14[1]
-        print(f"mask shape: {mask.shape}")
-        print(f"mask type: {mask.dtype}")
-        print(f"mask min: {mask.min()}")
-        print(f"mask max: {mask.max()}")
-        print(f"mask mean: {mask.mean()}")
+        ld_img, mask = loadimage_14
+        
+        print(f"+++ mask min: {mask.min()} max: {mask.max()} | in min: {in_mask.min()} max: {in_mask.max()}")
+        print(f"+++ mask mean: {mask.mean()} | in mean: {in_mask.mean()}")
 
         brushnet = NODE_CLASS_MAPPINGS["BrushNet"]()
         ksampler = KSampler()
         vaedecode = VAEDecode()
         saveimage = SaveImage()
 
-        for q in range(10):
+        for q in range(1):
             brushnet_12 = brushnet.model_update(
                 scale=0.8,
                 start_at=0,
                 end_at=10000,
-                model=get_value_at_index(loraloader_21, 0),
-                vae=get_value_at_index(checkpointloadersimple_4, 2),
-                image=get_value_at_index(loadimage_14, 0),
-                mask=get_value_at_index(loadimage_14, 1),
+                model=unet,
+                vae=get_value_at_index(basic_checkpoint, 2),
+                image=in_img,
+                mask=in_mask,
                 brushnet=get_value_at_index(brushnetloader_10, 0),
-                positive=get_value_at_index(cliptextencode_6, 0),
-                negative=get_value_at_index(cliptextencode_7, 0),
+                positive=get_value_at_index(positive, 0),
+                negative=get_value_at_index(negative, 0),
             )
 
             ksampler_3 = ksampler.sample(
@@ -157,13 +162,16 @@ def comfy_ui_workflow():
 
             vaedecode_8 = vaedecode.decode(
                 samples=get_value_at_index(ksampler_3, 0),
-                vae=get_value_at_index(checkpointloadersimple_4, 2),
+                vae=get_value_at_index(basic_checkpoint, 2),
             )
 
-            saveimage_9 = saveimage.save_images(
-                filename_prefix="ComfyUI", images=get_value_at_index(vaedecode_8, 0)
-            )
+            result_img=get_value_at_index(vaedecode_8, 0)
+            return result_img
 
 
-def workflow():
-    comfy_ui_workflow()
+from skimage import io
+
+def workflow(img: torch.Tensor, mask: torch.Tensor):
+    prompt_text = "the planet earth"
+    result = comfy_ui_workflow( img, mask, prompt_text)
+    return result

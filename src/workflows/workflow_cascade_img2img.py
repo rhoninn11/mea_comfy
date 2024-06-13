@@ -68,7 +68,7 @@ from nodes import (
 
 from skimage import io
 
-def comfy_ui_workflow(input_image: torch.Tensor, promtp_text: str = ""):
+def comfy_ui_workflow(input_image: torch.Tensor, promtp_text: str = "") -> torch.Tensor:
     import_custom_nodes()
     with torch.inference_mode():
         checkpointloadersimple = CheckpointLoaderSimple()
