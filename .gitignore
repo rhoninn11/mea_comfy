@@ -3,3 +3,5 @@ fs
 __pycache__
 .vscode
 tmp
+src/proto
+comfyui*.log

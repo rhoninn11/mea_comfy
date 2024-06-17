@@ -22,8 +22,14 @@ def setUpComfy():
         #     # install comfy ui
         # sys.path.append(repolist['comfy']["dir"])
 
+my_args = sys.argv.copy()
+sys.argv = sys.argv[:1]
+# to not interference with comfy
+
 setUpComfy()
 sys.path.append("src")
+sys.path.append("src/proto")
 
-from prog import prog
-prog()
+from src.main import main
+sys.argv = my_args
+main()

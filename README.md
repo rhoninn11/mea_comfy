@@ -8,12 +8,25 @@ Simple script for wraping comfy ui workflows for future usage as a micro service
 #### setting environment:
 ```
 pip install -r req.txt
+python proto_gen.py
 ```
 /not all dependencies added yet into req.txt
 
-#### start server
+#### Start one of scripts using:
 ```
-pthon main.py
+python main.py 
 ```
+
+### +++ Help +++
+```
+usage: main.py [-h] [-demo] [-server] [-client]
+
+comfy ui workflow run
+
+options:
+  -h, --help  show this help message and exit
+  -demo       run demo script for comfy ui inpaint
+  -server     start grpc for comfy ui inpaint
+  -client     start grpc client for comfy ui inpaint
 
 

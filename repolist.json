@@ -10,5 +10,11 @@
         "url": "https://github.com/pydn/ComfyUI-to-Python-Extension.git",
         "dir": "repo/ComfyUI-to-Python-Extension",
         "commit": "a1d651b61d30ad81daf0ff92d7c0873247514d0d"
+    },
+    "comfy_manager": {
+        "name": "comfy_manager",
+        "url": "https://github.com/ltdrdata/ComfyUI-Manager.git",
+        "dir": "repo/ComfyUI/custom_nodes",
+        "commit": "86e175e92075c155734b6029574c6635480c9948"
     }
 }

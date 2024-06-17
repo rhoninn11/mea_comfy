@@ -64,3 +64,4 @@ def find_imgs(path):
 
     # print(f"+++ files smaple {file_list[:5]}")
     return file_list
+
