@@ -5,6 +5,7 @@ import os, torch
 from workflows.workflow_cascade_img2img import workflow as workflow_cascade
 from workflows.workflow_sdxl_inpaint import workflow as wokflow_inpaint
 
+
 def load_image(file):
     img_np = io.imread(file)
     img_pt = img_np_2_pt(img_np, transpose=False, one_minus_one=False)
@@ -12,7 +13,7 @@ def load_image(file):
     return img_pt
 
 def single_channel(pt_image):
-    return pt_image[:,:,:, 0]
+    return pt_image[:,:,:, 0:1]
 
 
 def inpaint_demo():
@@ -33,6 +34,22 @@ def inpaint_demo():
 import proto.comfy_pb2 as pb2
 import proto.comfy_pb2_grpc as pb2_grpc
 
+def img_proto_2_pt(img_proto: pb2.Image) -> torch.Tensor:
+    img_np = np.frombuffer(img_proto.pixels, dtype=np.uint8)
+    img_np = img_np.reshape(img_proto.info.height, img_proto.info.width, img_proto.info.img_type)
+    img_pt = img_np_2_pt(img_np, transpose=False, one_minus_one=False)
+    return img_pt.unsqueeze(0)
+
+def img_pt_2_proto(img_pt: torch.Tensor) -> pb2.Image:
+    _, width, height, ch = img_pt.shape
+    img_type = pb2.ImgType.RGB if ch == 3 else pb2.ImgType.MONO
+    img_info = pb2.ImgInfo(width=width, height=height, img_type=img_type)
+    byte_data = img_pt_2_np(img_pt, transpose=False, one_minus_one=False).tobytes()
+    img_pt = pb2.Image(info=img_info, pixels=byte_data)
+    return img_pt
+
+
+
 class ComfyService(pb2_grpc.ComfyServicer):
     def __init__(self):
         self.for_now = "😇"
@@ -41,35 +58,31 @@ class ComfyService(pb2_grpc.ComfyServicer):
 
     def SetImage(self, request: pb2.Image, context):
         print(f"+++ set image")
-        print(f"+++ img size: {request.info.width}x{request.info.height}")
-        img_np = np.frombuffer(request.pixels, dtype=np.uint8)
-        img_np = img_np.reshape(request.info.height, request.info.width, 3)
-        img_pt = img_np_2_pt(img_np, transpose=False, one_minus_one=False)
-        self.img_pt = img_pt.unsqueeze(0)
-        print(f"+++ img pt shape: {self.img_pt.shape}")
+        self.img_pt = img_proto_2_pt(request)
         return pb2.Empty()
     
     def SetMask(self, request: pb2.Image, context):
         print(f"+++ set mask")
-        print(f"+++ mask size: {request.info.width}x{request.info.height}")
-        mask_np = np.frombuffer(request.pixels, dtype=np.uint8)
-        mask_np = mask_np.reshape(request.info.height, request.info.width, 1)
-        mask_pt = img_np_2_pt(mask_np, transpose=False, one_minus_one=False)
-        self.mask_pt = mask_pt.unsqueeze(0)
-        print(f"+++ mask pt shape: {self.mask_pt.shape}")
+        self.mask_pt = img_proto_2_pt(request)
         return pb2.Empty()
     
-    def Inpaint(self, request, context):
+    def Inpaint(self, request, context) -> pb2.Image:
         print(f"+++ inpaint")
-
         img_pt = wokflow_inpaint(self.img_pt, self.mask_pt)
+        return img_pt_2_proto(img_pt)
+    
 
-        _, width, height, _ = img_pt.shape
-        img_info = pb2.ImgInfo(width=width, height=height, img_type=pb2.ImgType.RGB)
-        byte_data = img_pt_2_np(img_pt, transpose=False, one_minus_one=False).tobytes()
-        img = pb2.Image(info=img_info, pixels=byte_data)
-        return img
+def _load_credential_from_file(filepath):
+    real_path = os.path.abspath(filepath)
+    with open(real_path, "rb") as f:
+        return f.read()
 
+
+SERVER_CERTIFICATE = _load_credential_from_file("assets/credentials/localhost.crt")
+SERVER_CERTIFICATE_KEY = _load_credential_from_file("assets/credentials/localhost.key")
+ROOT_CERTIFICATE = _load_credential_from_file("assets/credentials/root.crt")
+
+import time
 import grpc
 import concurrent.futures as futures
 import numpy as np
@@ -88,34 +101,28 @@ def start_client():
     print("+++ Client starting...")
     img_file = 'assets/img.png'
     img_pt = load_image(img_file)
-
-    _, width, height, _ = img_pt.shape
-    img_info = pb2.ImgInfo(width=width, height=height, img_type=pb2.ImgType.RGB)
-    byte_data = img_pt_2_np(img_pt, transpose=False, one_minus_one=False).tobytes()
-    img_proto = pb2.Image(info=img_info, pixels=byte_data)
+    img_proto = img_pt_2_proto(img_pt)
 
     mask_file = 'assets/mask.png'
     mask_pt = load_image(mask_file)
     mask_pt = single_channel(mask_pt)
-
-    _, width, height = mask_pt.shape
-    mask_info = pb2.ImgInfo(width=width, height=height, img_type=pb2.ImgType.MONO)
-    byte_data = img_pt_2_np(mask_pt, transpose=False, one_minus_one=False).tobytes()
-    mask_proto = pb2.Image(info=mask_info, pixels=byte_data)
-
+    mask_proto = img_pt_2_proto(mask_pt)
 
     channel = grpc.insecure_channel("localhost:50051")
     stub = pb2_grpc.ComfyStub(channel)
 
+    tick = time.perf_counter()
     stub.SetImage(img_proto)
     stub.SetMask(mask_proto)
-    inpaint_out = stub.Inpaint(pb2.Empty())
-    img_np = np.frombuffer(inpaint_out.pixels, dtype=np.uint8)
-    img_np = img_np.reshape(1, inpaint_out.info.height, inpaint_out.info.width, 3)
-    io.imsave('fs/out_client.png', img_np)
+    inpaint_proto = stub.Inpaint(pb2.Empty())
+    tock = time.perf_counter()
+    print(f"+++ Inpainting took {(tock - tick)} s")
+    io.imsave('fs/out_client_1.png', img_pt_2_np(img_proto_2_pt(inpaint_proto), transpose=False, one_minus_one=False))
 
 
 import argparse
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="comfy ui workflow run")

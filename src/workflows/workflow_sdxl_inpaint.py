@@ -66,40 +66,64 @@ UNET = 0
 CLIP = 1
 VAE = 2
 
-def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str):
-# def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str):
+
+custom_imported_flag = False
+def comfy_plugins():
+    global custom_imported_flag
+    if custom_imported_flag:
+        return
+
+    print(f"+++ first model run")
     import_custom_nodes()
+    custom_imported_flag = True
+
+
+models_loaded_flag = False
+unet, clip, vae, brushnet_model = None, None, None, None
+def load_models():
+
+    global models_loaded_flag
+    if models_loaded_flag:
+        return
+    
+    print(f"+++ load models")
+    global unet, clip, vae, brushnet_model
+    checkpointloadersimple = CheckpointLoaderSimple()
+    basic_checkpoint = checkpointloadersimple.load_checkpoint(
+        ckpt_name="photopediaXL_45.safetensors"
+    )
+    unet, clip, vae = basic_checkpoint
+
+    loraloader = LoraLoader()
+    model_with_offset = loraloader.load_lora(
+        lora_name="sd_xl_offset_example-lora_1.0.safetensors",
+        strength_model=1,
+        strength_clip=1,
+        model=unet,
+        clip=clip,
+    )
+    unet, clip = model_with_offset
+
+    model_but_faster = loraloader.load_lora(
+        lora_name="Hyper-SDXL-12steps-CFG-lora.safetensors",
+        strength_model=1,
+        strength_clip=1,
+        model=unet,
+        clip=clip,
+    )
+    unet, clip = model_but_faster
+
+    brushnetloader = NODE_CLASS_MAPPINGS["BrushNetLoader"]()
+    brushnet_model, = brushnetloader.brushnet_loading(
+        brushnet="brushnet_random_mask.safetensors", dtype="float16"
+    )
+    models_loaded_flag = True
+
+def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str):
+    comfy_plugins()
+    global unet, clip, vae, brushnet_model
     with torch.inference_mode():
-        checkpointloadersimple = CheckpointLoaderSimple()
-        basic_checkpoint = checkpointloadersimple.load_checkpoint(
-            ckpt_name="photopediaXL_45.safetensors"
-        )
-        unet, clip, vae = basic_checkpoint
-
-        emptylatentimage = EmptyLatentImage()
-        emptylatentimage_5 = emptylatentimage.generate(
-            width=1024, height=1024, batch_size=1
-        )
-
-        loraloader = LoraLoader()
-        model_with_offset = loraloader.load_lora(
-            lora_name="sd_xl_offset_example-lora_1.0.safetensors",
-            strength_model=1,
-            strength_clip=1,
-            model=unet,
-            clip=clip,
-        )
-        unet, clip = model_with_offset
-
-        model_but_faster = loraloader.load_lora(
-            lora_name="Hyper-SDXL-12steps-CFG-lora.safetensors",
-            strength_model=1,
-            strength_clip=1,
-            model=unet,
-            clip=clip,
-        )
-        unet, clip = model_but_faster
-
+        load_models()
         cliptextencode = CLIPTextEncode()
         prompt_text = in_prmpt
 
@@ -113,60 +137,44 @@ def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str
             clip=clip,
         )
 
-        brushnetloader = NODE_CLASS_MAPPINGS["BrushNetLoader"]()
-        brushnetloader_10 = brushnetloader.brushnet_loading(
-            brushnet="brushnet_random_mask.safetensors", dtype="float16"
-        )
-
-        loadimage = LoadImage()
-        loadimage_14 = loadimage.load_image(
-            image="clipspace/clipspace-mask-80537.png [input]"
-        )
-
-        ld_img, mask = loadimage_14
         
-        print(f"+++ mask min: {mask.min()} max: {mask.max()} | in min: {in_mask.min()} max: {in_mask.max()}")
-        print(f"+++ mask mean: {mask.mean()} | in mean: {in_mask.mean()}")
-
         brushnet = NODE_CLASS_MAPPINGS["BrushNet"]()
         ksampler = KSampler()
         vaedecode = VAEDecode()
-        saveimage = SaveImage()
 
-        for q in range(1):
-            brushnet_12 = brushnet.model_update(
-                scale=0.8,
-                start_at=0,
-                end_at=10000,
-                model=unet,
-                vae=get_value_at_index(basic_checkpoint, 2),
-                image=in_img,
-                mask=in_mask,
-                brushnet=get_value_at_index(brushnetloader_10, 0),
-                positive=get_value_at_index(positive, 0),
-                negative=get_value_at_index(negative, 0),
-            )
+        brushnet_12 = brushnet.model_update(
+            scale=0.8,
+            start_at=0,
+            end_at=10000,
+            model=unet,
+            vae=vae,
+            image=in_img,
+            mask=in_mask,
+            brushnet=brushnet_model,
+            positive=get_value_at_index(positive, 0),
+            negative=get_value_at_index(negative, 0),
+        )
 
-            ksampler_3 = ksampler.sample(
-                seed=0,
-                steps=12,
-                cfg=5,
-                sampler_name="euler_ancestral",
-                scheduler="normal",
-                denoise=1,
-                model=get_value_at_index(brushnet_12, 0),
-                positive=get_value_at_index(brushnet_12, 1),
-                negative=get_value_at_index(brushnet_12, 2),
-                latent_image=get_value_at_index(brushnet_12, 3),
-            )
+        ksampler_3 = ksampler.sample(
+            seed=0,
+            steps=12,
+            cfg=5,
+            sampler_name="euler_ancestral",
+            scheduler="normal",
+            denoise=1,
+            model=get_value_at_index(brushnet_12, 0),
+            positive=get_value_at_index(brushnet_12, 1),
+            negative=get_value_at_index(brushnet_12, 2),
+            latent_image=get_value_at_index(brushnet_12, 3),
+        )
 
-            vaedecode_8 = vaedecode.decode(
-                samples=get_value_at_index(ksampler_3, 0),
-                vae=get_value_at_index(basic_checkpoint, 2),
-            )
+        vaedecode_8 = vaedecode.decode(
+            samples=get_value_at_index(ksampler_3, 0),
+            vae=vae,
+        )
 
-            result_img=get_value_at_index(vaedecode_8, 0)
-            return result_img
+        result_img=get_value_at_index(vaedecode_8, 0)
+        return result_img
 
 
 from skimage import io
