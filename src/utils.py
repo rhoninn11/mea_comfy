@@ -40,28 +40,3 @@ def img_pt_2_np(img_pt, one_minus_one=True, transpose=True):
     
 
     return img_np
-
-def img_downscale(img_np, downscale):
-    img_np = img_np[::downscale, ::downscale, :]
-    return img_np
-
-def reduce_channels(img_np):
-    img_np = img_np[:, :, :3]
-    return img_np
-
-def load_and_process_img(img_path, scale_down=16):
-    img_np = io.imread(img_path)
-    img_np = img_downscale(img_np, scale_down)
-    img_np = reduce_channels(img_np)
-    return img_np
-
-
-def find_imgs(path):
-    file_list = []
-    files_in = os.listdir(path)
-    for file in files_in:
-        file_list.append(os.path.join(path, file))
-
-    # print(f"+++ files smaple {file_list[:5]}")
-    return file_list
-

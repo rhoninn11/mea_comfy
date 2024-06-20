@@ -90,7 +90,7 @@ def load_models():
     global unet, clip, vae, brushnet_model
     checkpointloadersimple = CheckpointLoaderSimple()
     basic_checkpoint = checkpointloadersimple.load_checkpoint(
-        ckpt_name="photopediaXL_45.safetensors"
+        ckpt_name="sd_xl_base_1.0_0.9vae.safetensors"
     )
     unet, clip, vae = basic_checkpoint
 

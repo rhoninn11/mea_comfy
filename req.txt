@@ -1,3 +1,5 @@
 gitpython
 numpy
 matplotlib
+grpcio-tools
+scikit-image
