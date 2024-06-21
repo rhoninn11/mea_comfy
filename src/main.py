@@ -1,9 +1,10 @@
-from src.utils import img_np_2_pt, img_pt_2_np
+from utils_mea import img_np_2_pt, img_pt_2_np
 import skimage.io as io
 
 import os, torch
 from workflows.workflow_cascade_img2img import workflow as workflow_cascade
-from workflows.workflow_sdxl_inpaint import workflow as wokflow_inpaint
+from workflows.workflow_sdxl_inpaint import workflow as workflow_inpaint
+from workflows.workflow_sdxl_img2img import workflow as workflow_img2img
 
 
 def load_image(file):
@@ -24,7 +25,7 @@ def inpaint_demo():
     mask_pt = load_image(mask_file)
     mask_pt = single_channel(mask_pt)
 
-    img_pt = wokflow_inpaint(img_pt, mask_pt)
+    img_pt = workflow_inpaint(img_pt, mask_pt)
     
     img_pt = img_pt.squeeze(0)
     img_np = img_pt_2_np(img_pt, transpose=False, one_minus_one=False)
@@ -33,20 +34,7 @@ def inpaint_demo():
 
 import proto.comfy_pb2 as pb2
 import proto.comfy_pb2_grpc as pb2_grpc
-
-def img_proto_2_pt(img_proto: pb2.Image) -> torch.Tensor:
-    img_np = np.frombuffer(img_proto.pixels, dtype=np.uint8)
-    img_np = img_np.reshape(img_proto.info.height, img_proto.info.width, img_proto.info.img_type)
-    img_pt = img_np_2_pt(img_np, transpose=False, one_minus_one=False)
-    return img_pt.unsqueeze(0)
-
-def img_pt_2_proto(img_pt: torch.Tensor) -> pb2.Image:
-    _, width, height, ch = img_pt.shape
-    img_type = pb2.ImgType.RGB if ch == 3 else pb2.ImgType.MONO
-    img_info = pb2.ImgInfo(width=width, height=height, img_type=img_type)
-    byte_data = img_pt_2_np(img_pt, transpose=False, one_minus_one=False).tobytes()
-    img_pt = pb2.Image(info=img_info, pixels=byte_data)
-    return img_pt
+from utils_mea import img_proto_2_pt, img_pt_2_proto, img_proto_2_np
 
 
 
@@ -68,7 +56,11 @@ class ComfyService(pb2_grpc.ComfyServicer):
     
     def Inpaint(self, request, context) -> pb2.Image:
         print(f"+++ inpaint")
-        img_pt = wokflow_inpaint(self.img_pt, self.mask_pt)
+        img_pt = workflow_inpaint(self.img_pt, self.mask_pt)
+        return img_pt_2_proto(img_pt)
+    
+    def Img2Img(self, request, context) -> pb2.Image:
+        img_pt = workflow_img2img(self.img_pt)
         return img_pt_2_proto(img_pt)
     
 
@@ -115,9 +107,10 @@ def start_client():
     stub.SetImage(img_proto)
     stub.SetMask(mask_proto)
     inpaint_proto = stub.Inpaint(pb2.Empty())
+    inpaint_np = img_proto_2_np(inpaint_proto)
     tock = time.perf_counter()
     print(f"+++ Inpainting took {(tock - tick)} s")
-    io.imsave('fs/out_client_1.png', img_pt_2_np(img_proto_2_pt(inpaint_proto), transpose=False, one_minus_one=False))
+    io.imsave('fs/out_client_1.png', inpaint_np)
 
 
 import argparse

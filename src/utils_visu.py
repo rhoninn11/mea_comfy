@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io
 
-from src.utils import img_pt_2_np
+from utils_mea import img_pt_2_np
 
 def imgs_display_plot(img_arr):
     img_num = len(img_arr)

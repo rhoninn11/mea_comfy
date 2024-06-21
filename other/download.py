@@ -18,23 +18,35 @@ def download_file(url, save_path):
         file.write(chunk)
     file.close()
 
+def ospth(path: str) -> str:
+    if os.name == "nt":
+        path = path.replace("/", "\\")
+    return path
 
+
+offset = "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_offset_example-lora_1.0.safetensors"
 hyper_2_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-2steps-lora.safetensors"
 hyper_8_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-8steps-CFG-lora.safetensors"
 hyper_12_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-12steps-CFG-lora.safetensors"
-brushnet = "https://huggingface.co/Kijai/BrushNet-fp16/resolve/main/brushnet_random_mask_fp16.safetensors"
+# brushnet = "https://huggingface.co/Kijai/BrushNet-fp16/resolve/main/brushnet_random_mask_fp16.safetensors" #fuck this is for 1.5 
+brushnet = "https://huggingface.co/grzelakadam/brushnet_xl_models/resolve/main/random_mask_brushnet_ckpt_sdxl_v0.safetensors" 
 
-comfy_path = "C:/Users/artla/Desktop/dev/comfy_ui/"
+comfy_path = os.getenv('COMFY')
+if comfy_path is None:
+    print("!!! path to ComfyUI must be set in env variable 'COMFY'")
+    exit()
+
 loras = "models/loras/"
 inpaint = "models/inpaint/"
 
-hyper_8_steps_path = os.path.join(comfy_path, loras)
-hyper_12_steps_path = os.path.join(comfy_path, loras)
-brushnet_path = os.path.join(comfy_path, inpaint)
+loras_path = os.path.join(comfy_path, loras)
+inpaint_path = os.path.join(comfy_path, inpaint)
 
-# download_file(hyper_8_steps, hyper_8_steps_path)
-# download_file(hyper_12_steps, hyper_12_steps_path)
+# download_file(hyper_2_steps, ospth(loras_path))
+# download_file(hyper_8_steps, ospth(loras_path))
+# download_file(hyper_12_steps, ospth(loras_path))
 if os.path.exists(comfy_path):
     print("elo")
-    os.makedirs(brushnet_path, exist_ok=True)
-download_file(brushnet, brushnet_path)
+    os.makedirs(inpaint_path, exist_ok=True)
+download_file(brushnet, inpaint_path)
+# download_file(offset, ospth(loras_path))

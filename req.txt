@@ -3,3 +3,4 @@ numpy
 matplotlib
 grpcio-tools
 scikit-image
+opencv-python

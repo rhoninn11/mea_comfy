@@ -7,6 +7,7 @@ service Comfy {
   rpc SetImage(Image) returns (Empty) {}
   rpc SetMask(Image) returns (Empty) {}
   rpc Inpaint(Empty) returns (Image) {}
+  rpc Img2Img(Empty) returns (Image) {}
 }
 
 enum ImgType {
