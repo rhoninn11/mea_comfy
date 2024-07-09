@@ -17,6 +17,7 @@ def setUpComfy():
         sys.path.append(value)
     else:
         print("COMFY not set in this system, at this moment is the only way")
+        exit()
         # if not os.path.exists(repolist['comfy']["dir"]):
         #     git.Repo.clone_from(repolist['comfy']["url"], repolist['comfy']["dir"])
         #     # install comfy ui

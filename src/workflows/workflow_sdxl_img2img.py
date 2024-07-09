@@ -58,6 +58,7 @@ from nodes import (
     LoraLoader,
     LoadImage,
     VAEDecode,
+    VAEEncode,
     KSampler,
     CLIPTextEncode,
 )
@@ -92,34 +93,21 @@ def load_models():
     basic_checkpoint = checkpointloadersimple.load_checkpoint(
         ckpt_name="sd_xl_base_1.0_0.9vae.safetensors"
     )
-    unet, clip, vae = basic_checkpoint
+    _ , clip, vae = basic_checkpoint
 
-    loraloader = LoraLoader()
-    model_with_offset = loraloader.load_lora(
-        lora_name="sd_xl_offset_example-lora_1.0.safetensors",
-        strength_model=1,
-        strength_clip=1,
-        model=unet,
-        clip=clip,
+    tensorrtloader = NODE_CLASS_MAPPINGS["TensorRTLoader"]()
+    rt_model = tensorrtloader.load_unet(
+        unet_name="xl_8step_img2img_$stat-b-1-h-1024-w-1024_00001_.engine",
+        model_type="sdxl_base",
     )
-    unet, clip = model_with_offset
 
-    model_but_faster = loraloader.load_lora(
-        lora_name="Hyper-SDXL-12steps-CFG-lora.safetensors",
-        strength_model=1,
-        strength_clip=1,
-        model=unet,
-        clip=clip,
-    )
-    unet, clip = model_but_faster
+    unet, = rt_model
 
-    brushnetloader = NODE_CLASS_MAPPINGS["BrushNetLoader"]()
-    brushnet_model, = brushnetloader.brushnet_loading(
-        brushnet="random_mask_brushnet_ckpt_sdxl_v0.safetensors", dtype="float16"
-    )
     models_loaded_flag = True
 
-def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str):
+import math
+
+def comfy_ui_workflow(in_img: torch.Tensor, in_prmpt: str):
     comfy_plugins()
     global unet, clip, vae, brushnet_model
     with torch.inference_mode():
@@ -137,35 +125,32 @@ def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str
             clip=clip,
         )
 
-        
-        brushnet = NODE_CLASS_MAPPINGS["BrushNet"]()
         ksampler = KSampler()
         vaedecode = VAEDecode()
+        vaeencode = VAEEncode()
 
-        brushnet_12 = brushnet.model_update(
-            scale=0.8,
-            start_at=0,
-            end_at=10000,
-            model=unet,
+        vaeencode_19 = vaeencode.encode(
+            pixels=in_img,
             vae=vae,
-            image=in_img,
-            mask=in_mask,
-            brushnet=brushnet_model,
-            positive=get_value_at_index(positive, 0),
-            negative=get_value_at_index(negative, 0),
         )
+
+        latent, = vaeencode_19
+
+        denoise = 0.2
+        max_steps = 8
+        steps = int(math.ceil(denoise*max_steps))
 
         ksampler_3 = ksampler.sample(
             seed=0,
-            steps=12,
-            cfg=5,
-            sampler_name="euler_ancestral",
-            scheduler="normal",
-            denoise=1,
-            model=get_value_at_index(brushnet_12, 0),
-            positive=get_value_at_index(brushnet_12, 1),
-            negative=get_value_at_index(brushnet_12, 2),
-            latent_image=get_value_at_index(brushnet_12, 3),
+            steps=steps,
+            cfg=7,
+            sampler_name="euler",
+            scheduler="kerras",
+            denoise=denoise,
+            model=unet,
+            positive=get_value_at_index(positive, 0),
+            negative=get_value_at_index(negative, 0),
+            latent_image=latent,
         )
 
         vaedecode_8 = vaedecode.decode(
@@ -175,10 +160,10 @@ def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str
 
         result_img=get_value_at_index(vaedecode_8, 0)
         return result_img
+    
 
 
-from skimage import io
-
-def workflow(img: torch.Tensor, mask: torch.Tensor, prompt_text):
-    result = comfy_ui_workflow( img, mask, prompt_text)
+def workflow(img: torch.Tensor):
+    prompt_text = "slavic shaman chanting spells"
+    result = comfy_ui_workflow( img, prompt_text)
     return result
