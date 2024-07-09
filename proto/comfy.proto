@@ -6,6 +6,7 @@ package comfy;
 service Comfy {
   rpc SetImage(Image) returns (Empty) {}
   rpc SetMask(Image) returns (Empty) {}
+  rpc SetOptions(Options) returns (Empty) {}
   rpc Inpaint(Empty) returns (Image) {}
 }
 
@@ -42,5 +43,9 @@ message Image {
 message InpaintData {
   Image img = 1;
   Image mask = 2;
+}
+
+message Options {
+  string prompt = 1;
 }
 

@@ -179,7 +179,6 @@ def comfy_ui_workflow(in_img: torch.Tensor, in_mask: torch.Tensor, in_prmpt: str
 
 from skimage import io
 
-def workflow(img: torch.Tensor, mask: torch.Tensor):
-    prompt_text = "the planet earth"
+def workflow(img: torch.Tensor, mask: torch.Tensor, prompt_text):
     result = comfy_ui_workflow( img, mask, prompt_text)
     return result

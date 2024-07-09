@@ -55,6 +55,7 @@ class ComfyService(pb2_grpc.ComfyServicer):
         self.for_now = "😇"
         self.img_pt = None
         self.mask_pt = None
+        self.options: pb2.Options = pb2.Options(prompt="flowers on sufrace of the earth")
 
     def SetImage(self, request: pb2.Image, context):
         print(f"+++ set image")
@@ -66,9 +67,14 @@ class ComfyService(pb2_grpc.ComfyServicer):
         self.mask_pt = img_proto_2_pt(request)
         return pb2.Empty()
     
+    def SetOptions(self, request: pb2.Options, context):
+        self.options = request
+        return pb2.Empty()
+    
     def Inpaint(self, request, context) -> pb2.Image:
         print(f"+++ inpaint")
-        img_pt = wokflow_inpaint(self.img_pt, self.mask_pt)
+        prompt = self.options.prompt
+        img_pt = wokflow_inpaint(self.img_pt, self.mask_pt, prompt)
         return img_pt_2_proto(img_pt)
     
 
@@ -92,7 +98,11 @@ def start_server():
     service = ComfyService()
     pb2_grpc.add_ComfyServicer_to_server(service, server)
 
-    server.add_insecure_port("localhost:50051")
+    auth_clinet_too = False
+    ssl_options = grpc.ssl_server_credentials(((SERVER_CERTIFICATE_KEY, SERVER_CERTIFICATE),), ROOT_CERTIFICATE, auth_clinet_too)
+
+    server.add_secure_port("localhost:50051", ssl_options)
+
     server.start()
     print("+++ Server started")
     server.wait_for_termination()
@@ -108,12 +118,17 @@ def start_client():
     mask_pt = single_channel(mask_pt)
     mask_proto = img_pt_2_proto(mask_pt)
 
-    channel = grpc.insecure_channel("localhost:50051")
+    ssl_options = grpc.ssl_channel_credentials(ROOT_CERTIFICATE)
+    channel = grpc.secure_channel("localhost:50051", ssl_options)
+
     stub = pb2_grpc.ComfyStub(channel)
+    prompt = "something i dont know yet"
+    gen_opt = pb2.Options(prompt=prompt)
 
     tick = time.perf_counter()
     stub.SetImage(img_proto)
     stub.SetMask(mask_proto)
+    stub.SetOptions(gen_opt)
     inpaint_proto = stub.Inpaint(pb2.Empty())
     tock = time.perf_counter()
     print(f"+++ Inpainting took {(tock - tick)} s")
