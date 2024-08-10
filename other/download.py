@@ -42,8 +42,8 @@ hyper_12_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-S
 # brushnet = "https://huggingface.co/Kijai/BrushNet-fp16/resolve/main/brushnet_random_mask_fp16.safetensors" #fuck this is for 1.5 
 brushnet = "https://huggingface.co/grzelakadam/brushnet_xl_models/resolve/main/random_mask_brushnet_ckpt_sdxl_v0.safetensors"
 
-flux_dev = "https://huggingface.co/Kijai/flux-fp8/resolve/main/flux1-dev-fp8.safetensors"
-flux_schenll = "https://huggingface.co/Kijai/flux-fp8/resolve/main/flux1-schnell-fp8.safetensors"
+flux_dev = "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors"
+flux_schenll = "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors"
 
 # ref to fix other links
 # https://comfyanonymous.github.io/ComfyUI_examples/flux/
@@ -61,10 +61,11 @@ if comfy_path is None:
 loras_path = os.path.join(comfy_path, "models/loras/")
 inpaint_path = os.path.join(comfy_path, "models/inpaint/")
 unet_path = os.path.join(comfy_path, "models/unet/")
+checkpoints_path = os.path.join(comfy_path, "models/checkpoints")
 
 # download_file(hyper_2_steps, ospth(loras_path))
 # download_file(hyper_8_steps, ospth(loras_path))
 # download_file(brushnet, inpaint_path)
 # download_file(offset, ospth(loras_path))
-download_file(flux_dev, unet_path)
-download_file(flux_schenll, unet_path)
+# download_file(flux_dev, unet_path)
+download_file(flux_schenll, checkpoints_path)
