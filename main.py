@@ -31,6 +31,10 @@ setUpComfy()
 sys.path.append("src")
 sys.path.append("src/proto")
 
-from src.main import main
 sys.argv = my_args
+from src.main import main
 main()
+
+# from src.workflows.sdxd_inpaint_plus_plus import comfy_script_test
+# from src.workflows.flux_schnell_txt2img import comfy_script_test
+# comfy_script_test()
