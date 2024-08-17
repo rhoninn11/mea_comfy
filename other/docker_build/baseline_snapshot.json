@@ -1,0 +1,23 @@
+{
+    "comfyui": "27d5808fc491c7174abc6f407e7dc11c6a7a1ec0",
+    "git_custom_nodes": {
+        "https://github.com/ltdrdata/ComfyUI-Manager.git": {
+            "hash": "04beb63aa045d9bd3f0ae8d2b44c6fad4b51ab3b",
+            "disabled": false
+        },
+        "https://github.com/cubiq/ComfyUI_IPAdapter_plus": {
+            "hash": "fef59c5b7f4d783a5793f04ea98d0ac8a88a1352",
+            "disabled": false
+        },
+        "https://github.com/cubiq/ComfyUI_essentials": {
+            "hash": "101ebaef8df8b0c7f55a810c8394e3276b0487e1",
+            "disabled": false
+        }
+    },
+    "file_custom_nodes": [
+        {
+            "filename": "websocket_image_save.py",
+            "disabled": false
+        }
+    ]
+}
