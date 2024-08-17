@@ -7,7 +7,7 @@ def ensure_path_exist(path):
     if os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 
-def download_file(url, save_path):
+def download_file(save_path, url):
     block_kb = 64
     block_size = block_kb * 1024
     
@@ -20,7 +20,7 @@ def download_file(url, save_path):
     
     resp = requests.get(url, stream=True)
     total_size = resp.headers.get("content-length", 0)
-    print(f"+++ downloading model size of {total_size}B")
+    print(f"+++ downloading model ({filename}) size of {total_size}B")
 
     progres_bar = tqdm(total=int(total_size), unit="B")
     file = open(os.path.join(save_path, filename), "wb")
@@ -44,13 +44,10 @@ brushnet = "https://huggingface.co/grzelakadam/brushnet_xl_models/resolve/main/r
 
 flux_dev = "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors"
 flux_schenll = "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors"
+flux_dev_nf4 = "https://huggingface.co/lllyasviel/flux1-dev-bnb-nf4/resolve/main/flux1-dev-bnb-nf4-v2.safetensors"
+flux_dev_gguf_5b = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q5_0.gguf"
+flux_dev_gguf_4b = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q4_0.gguf"
 
-# ref to fix other links
-# https://comfyanonymous.github.io/ComfyUI_examples/flux/
-# flux_clip_l = "https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/clip_l.safetensors"
-# flux_t5_fp16 = "https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/t5xxl_fp16.safetensors"
-# flux_t5_fp8 = "https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/t5xxl_fp8_e4m3fn.safetensors"
-# flux_ae = "https://huggingface.co/black-forest-labs/FLUX.1-schnell/blob/main/ae.safetensors"
 
 
 comfy_path = os.getenv('COMFY')
@@ -63,9 +60,5 @@ inpaint_path = os.path.join(comfy_path, "models/inpaint/")
 unet_path = os.path.join(comfy_path, "models/unet/")
 checkpoints_path = os.path.join(comfy_path, "models/checkpoints")
 
-# download_file(hyper_2_steps, ospth(loras_path))
-# download_file(hyper_8_steps, ospth(loras_path))
-# download_file(brushnet, inpaint_path)
-# download_file(offset, ospth(loras_path))
-# download_file(flux_dev, unet_path)
-download_file(flux_schenll, checkpoints_path)
+
+download_file(unet_path, flux_dev_gguf_4b)
