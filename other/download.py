@@ -35,16 +35,16 @@ def ospth(path: str) -> str:
     return path
 
 
-offset = "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_offset_example-lora_1.0.safetensors"
-hyper_2_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-2steps-lora.safetensors"
-hyper_8_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-8steps-CFG-lora.safetensors"
+offset_lora = "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_offset_example-lora_1.0.safetensors"
+# hyper_2_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-2steps-lora.safetensors"
+# hyper_8_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-8steps-CFG-lora.safetensors"
 hyper_12_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-12steps-CFG-lora.safetensors"
 # brushnet = "https://huggingface.co/Kijai/BrushNet-fp16/resolve/main/brushnet_random_mask_fp16.safetensors" #fuck this is for 1.5 
-brushnet = "https://huggingface.co/grzelakadam/brushnet_xl_models/resolve/main/random_mask_brushnet_ckpt_sdxl_v0.safetensors"
+brushnet_ref = "https://huggingface.co/grzelakadam/brushnet_xl_models/resolve/main/random_mask_brushnet_ckpt_sdxl_v0.safetensors"
+photopedia_ref = "https://huggingface.co/grzelakadam/mmodel_ref/resolve/main/photopediaXL_45.safetensors"
 
 flux_dev = "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors"
 flux_schenll = "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors"
-flux_dev_nf4 = "https://huggingface.co/lllyasviel/flux1-dev-bnb-nf4/resolve/main/flux1-dev-bnb-nf4-v2.safetensors"
 flux_dev_gguf_5b = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q5_0.gguf"
 flux_dev_gguf_4b = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q4_0.gguf"
 
@@ -60,5 +60,13 @@ inpaint_path = os.path.join(comfy_path, "models/inpaint/")
 unet_path = os.path.join(comfy_path, "models/unet/")
 checkpoints_path = os.path.join(comfy_path, "models/checkpoints")
 
+download_file(loras_path, offset_lora)
+download_file(loras_path, hyper_12_steps)
 
-download_file(unet_path, flux_dev_gguf_4b)
+download_file(inpaint_path, brushnet_ref)
+
+download_file(checkpoints_path, photopedia_ref)
+download_file(checkpoints_path, flux_dev)
+download_file(checkpoints_path, flux_schenll)
+
+download_file(unet_path, flux_dev_gguf_5b)

@@ -180,6 +180,8 @@ start_comfy_ui
 start_jupyter
 export_env_vars
 
+export COMFY="/workspace/ComfyUI"
+
 execute_script "/post_start.sh" "Running post-start script..."
 
 echo "Start script(s) finished, pod is ready to use."
