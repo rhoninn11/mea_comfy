@@ -36,7 +36,10 @@ class ComfyService(pb2_grpc.ComfyServicer):
         return img_pt_2_proto(img_pt)
 
     def Img2Img(self, request, context) -> pb2.Image:
-        img_pt = workflow_img2img(self.img_pt)
+        print("+++ img2img")
+        prompt = self.options.prompt
+        img_power = self.options.img_power
+        img_pt = workflow_img2img(self.img_pt, self.mask_pt, prompt, img_power)
         return img_pt_2_proto(img_pt)
     
 

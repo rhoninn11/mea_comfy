@@ -50,15 +50,17 @@ def start_client():
     channel = grpc.secure_channel("localhost:50051", ssl_options)
 
     stub = pb2_grpc.ComfyStub(channel)
-    prompt = "something i dont know yet"
-    gen_opt = pb2.Options(prompt=prompt)
+    prompt = "earth hit by meteorite"
+    img_power = 0.2
+    gen_opt = pb2.Options(prompt=prompt, img_power=img_power)
 
     tick = time.perf_counter()
     stub.SetImage(img_proto)
     stub.SetMask(mask_proto)
     stub.SetOptions(gen_opt)
-    inpaint_proto = stub.Inpaint(pb2.Empty())
-    inpaint_np = img_proto_2_np(inpaint_proto)
+    # result_proto = stub.Inpaint(pb2.Empty())
+    result_proto = stub.Img2Img(pb2.Empty())
+    inpaint_np = img_proto_2_np(result_proto)
     tock = time.perf_counter()
     print(f"+++ Inpainting took {(tock - tick)} s")
     io.imsave('fs/out_client_1.png', inpaint_np)
