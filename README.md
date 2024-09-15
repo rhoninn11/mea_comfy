@@ -28,5 +28,11 @@ options:
   -demo       run demo script for comfy ui inpaint
   -server     start grpc for comfy ui inpaint
   -client     start grpc client for comfy ui inpaint
+```
 
+### +++ That might be helpful for me +++
+```
+conda install pytorch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 pytorch-cuda=11.8 -c pytorch -c nvidia -y
+
+```
 

@@ -57,6 +57,9 @@ import grpc
 import concurrent.futures as futures
 
 def start_server():
+
+    port = 50051
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
     service = ComfyService()
     pb2_grpc.add_ComfyServicer_to_server(service, server)
@@ -64,7 +67,8 @@ def start_server():
     auth_clinet_too = False
     ssl_options = grpc.ssl_server_credentials(((SERVER_CERTIFICATE_KEY, SERVER_CERTIFICATE),), ROOT_CERTIFICATE, auth_clinet_too)
 
-    server.add_secure_port("localhost:50051", ssl_options)
+    server.add_secure_port(f"localhost:{port}", ssl_options)
+    # server.add_insecure_port(f"localhost:{port}")
 
     server.start()
     print("+++ Server started")
