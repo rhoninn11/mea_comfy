@@ -6,6 +6,7 @@ from utils_mea import img_proto_2_pt, img_pt_2_proto, img_proto_2_np
 
 from workflows.flux_inpaint_blend import workflow as workflow_inpaint
 from workflows.flux_img2img import workflow as workflow_img2img
+from workflows.flux_txt2img import workflow as workflow_tmg2img
 
 
 class ComfyService(pb2_grpc.ComfyServicer):
@@ -40,6 +41,11 @@ class ComfyService(pb2_grpc.ComfyServicer):
         prompt = self.options.prompt
         img_power = self.options.img_power
         img_pt = workflow_img2img(self.img_pt, self.mask_pt, prompt, img_power)
+        return img_pt_2_proto(img_pt)
+    
+    def Txt2Img(self, request, context):
+        prompt = self.options.prompt
+        img_pt = workflow_tmg2img(prompt)
         return img_pt_2_proto(img_pt)
     
 

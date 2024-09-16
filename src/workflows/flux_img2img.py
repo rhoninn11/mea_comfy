@@ -22,14 +22,19 @@ def comfy_flux_img2img(text_prompt: str, img_power: float, src_img: torch.Tensor
 
         empty_neg = CLIPTextEncode('', clip)
         first_desc = CLIPTextEncode(text_prompt, clip)
+
+        # 
         second_desc = CLIPTextEncode("stoned cow is eating a grass", clip)
         third_desc = CLIPTextEncode("it's about to rain", clip)
         first_combination = ConditioningConcat(second_desc, first_desc)
         second_combination = ConditioningConcat(first_combination, third_desc)
+        # 
+
+        cond_pos = first_desc
 
         total_steps = 20
         init_step = int(round(total_steps * power))
-        latent = KSamplerAdvanced(model, 'enable', seed, total_steps, 1, 'euler', 'simple', first_desc, empty_neg, src_latent, init_step, total_steps, 'disable')
+        latent = KSamplerAdvanced(model, 'enable', seed, total_steps, 1, 'euler', 'simple', cond_pos, empty_neg, src_latent, init_step, total_steps, 'disable')
         img_out = VAEDecode(latent, vae)
 
         # SaveImage(pt_img, 'ComfyUI')

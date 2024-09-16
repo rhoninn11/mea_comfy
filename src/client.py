@@ -3,7 +3,7 @@ import grpc
 
 from skimage import io
 from utils_mea import img_np_2_pt
-
+import shutil
 
 def load_image(file):
     img_np = io.imread(file)
@@ -14,13 +14,17 @@ def load_image(file):
 def single_channel(pt_image):
     return pt_image[:,:,:, 0:1]
 
-def load_prompt(file):
+def load_prompt():
     import json
 
-    if not os.path.exists(file):
-        return "giant astronout placed on suface of the earth"
-    
-    f = open(file, "r")
+    prompt_src = "assets\prompt.json"
+    prompt_dst = "fs/prompt.json"
+    if not os.path.exists(prompt_dst):
+        if not os.path.exists(prompt_src):
+            return "very simple tree"
+        shutil.copy(prompt_src, prompt_dst)
+
+    f = open(prompt_dst, "r")
     prompt = json.load(f)["prompt"]
     return prompt
 
@@ -63,20 +67,24 @@ def start_client():
     # channel = grpc.insecure_channel(f"localhost:{port}")
 
     stub = pb2_grpc.ComfyStub(channel)
-    prompt_file = "assets/promt.json"
-    prompt = load_prompt(prompt_file)
+
+    
+
+    prompt = load_prompt()
     print(prompt)
     img_power = 0.2
     gen_opt = pb2.Options(prompt=prompt, img_power=img_power)
 
     tick = time.perf_counter()
-    stub.SetImage(img_proto)
-    stub.SetMask(mask_proto)
+    # stub.SetImage(img_proto)
+    # stub.SetMask(mask_proto)
     stub.SetOptions(gen_opt)
     # result_proto = stub.Inpaint(pb2.Empty())
-    result_proto = stub.Img2Img(pb2.Empty())
-    inpaint_np = img_proto_2_np(result_proto)
+    # result_proto = stub.Img2Img(pb2.Empty())
+    result_proto = stub.Txt2Img(pb2.Empty())
     tock = time.perf_counter()
+
+    inpaint_np = img_proto_2_np(result_proto)
     print(f"+++ Inpainting took {(tock - tick)} s")
     io.imsave('fs/out_client_1.png', inpaint_np)
 

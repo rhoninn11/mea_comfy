@@ -24,14 +24,17 @@ def comfy_script_test(text_prompt: str, schnell=True) -> torch.Tensor:
 
         empty_neg = CLIPTextEncode('', clip)
         first_desc = CLIPTextEncode(text_prompt, clip)
+
+        # 
         second_desc = CLIPTextEncode("stoned cow is eating a grass", clip)
         third_desc = CLIPTextEncode("it's about to rain", clip)
         first_combination = ConditioningConcat(second_desc, first_desc)
         second_combination = ConditioningConcat(first_combination, third_desc)
+        # 
 
+        cond_pos, negative, latent = InpaintModelConditioning(first_desc, empty_neg, vae, src_img, soft_mask)
 
-        positive, negative, latent = InpaintModelConditioning(first_desc, empty_neg, vae, src_img, soft_mask)
-        latent = KSamplerAdvanced(model, 'enable', 73676964823421, 20, 1, 'euler', 'simple', positive, negative, latent, 14, 20, 'disable')
+        latent = KSamplerAdvanced(model, 'enable', 73676964823421, 20, 1, 'euler', 'simple', cond_pos, negative, latent, 14, 20, 'disable')
         img_out = VAEDecode(latent, vae)
 
         pt_img = src_img*(1-pt_mask) + img_out*pt_mask
