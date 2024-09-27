@@ -5,28 +5,36 @@ from skimage import io
 from utils_mea import img_np_2_pt
 import shutil
 
-def load_image(file):
-    img_np = io.imread(file)
-    img_pt = img_np_2_pt(img_np, transpose=False, one_minus_one=False)
-    img_pt = img_pt.unsqueeze(0)
-    return img_pt
+
 
 def single_channel(pt_image):
     return pt_image[:,:,:, 0:1]
 
-def load_prompt():
-    import json
-
-    prompt_src = "assets\prompt.json"
-    prompt_dst = "fs/prompt.json"
+def proj_asset(name):
+    prompt_src = f"assets/{name}"
+    prompt_dst = f"fs/{name}"
     if not os.path.exists(prompt_dst):
         if not os.path.exists(prompt_src):
-            return "very simple tree"
+            raise FileExistsError()
         shutil.copy(prompt_src, prompt_dst)
 
-    f = open(prompt_dst, "r")
+    return prompt_dst
+
+
+def load_prompt():
+    import json
+    prompt_file = proj_asset("prompt.json")
+    f = open(prompt_file, "r")
     prompt = json.load(f)["prompt"]
     return prompt
+
+def load_image(name):
+    img_file = proj_asset(name)
+    print(img_file)
+    img_np = io.imread(img_file)
+    img_pt = img_np_2_pt(img_np, transpose=False, one_minus_one=False)
+    img_pt = img_pt.unsqueeze(0)
+    return img_pt
 
 
 
@@ -53,14 +61,17 @@ def start_client():
     # spawn assets in fs
 
     print("+++ Client starting...")
-    img_file = 'assets/img.png'
-    img_pt = load_image(img_file)
+    img_pt = load_image('img.png')
     img_proto = img_pt_2_proto(img_pt)
 
-    mask_file = 'assets/mask.png'
-    mask_pt = load_image(mask_file)
+    mask_pt = load_image('mask.png')
     mask_pt = single_channel(mask_pt)
     mask_proto = img_pt_2_proto(mask_pt)
+
+    # ok, so now we can create simple editor for image masking, zooming in and out, as a simple separate toy app
+    # oparating on fs files
+    # 
+    # im curious if model like clude 3.5 or o1 will nail it xD
 
     ssl_options = grpc.ssl_channel_credentials(ROOT_CERTIFICATE)
     channel = grpc.secure_channel(f"localhost:{port}", ssl_options)
@@ -86,5 +97,5 @@ def start_client():
 
     inpaint_np = img_proto_2_np(result_proto)
     print(f"+++ Inpainting took {(tock - tick)} s")
-    io.imsave('fs/out_client_1.png', inpaint_np)
+    io.imsave('fs/out_img.png', inpaint_np)
 

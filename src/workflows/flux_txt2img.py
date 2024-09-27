@@ -9,9 +9,9 @@ from skimage import io
 
 from src.utils_mea import img_pt_2_np
 
-def comfy_flux_txt2img(prompt: str, schnell=True):
+def comfy_flux_txt2img(prompt: str, seed_: int, schnell=True):
     with Workflow():
-        seed = 1
+        seed = seed_
         steps_dev = 20
         steps_schnell = 4
         flux_dev = 'flux1-dev-fp8.safetensors'
@@ -46,6 +46,6 @@ def comfy_flux_txt2img(prompt: str, schnell=True):
         pt_img = img_out.detach()
         return pt_img
 
-def workflow(prompt_text: str) -> torch.Tensor:
-    result = comfy_flux_txt2img(prompt_text)
+def workflow(prompt_text: str, seed: int = 0) -> torch.Tensor:
+    result = comfy_flux_txt2img(prompt_text, seed)
     return result

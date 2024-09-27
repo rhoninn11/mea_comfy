@@ -50,5 +50,6 @@ message InpaintData {
 message Options {
   string prompt = 1;
   float img_power = 2;
+  int32 seed = 3;
 }
 
