@@ -62,9 +62,10 @@ def start_client():
     # 
     # im curious if model like clude 3.5 or o1 will nail it xD
 
-    ssl_options = grpc.ssl_channel_credentials(ROOT_CERTIFICATE)
+    credentials = grpc.ssl_channel_credentials(ROOT_CERTIFICATE)
+    channel_options = [('grpc.ssl_target_name_override', 'localhost')]
     serv_address = f"localhost:{port}"
-    channel = grpc.secure_channel(serv_address, ssl_options)
+    channel = grpc.secure_channel(serv_address, credentials, options=channel_options)
     # channel = grpc.insecure_channel(serv_address)
 
     stub = pb2_grpc.ComfyStub(channel)
