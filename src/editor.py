@@ -115,19 +115,35 @@ class Canvas(QWidget):
 
         self.last_point = QPoint()
         
-        self.brush_size = 5
-        self.brush_picking_active = False
-
         self.drawing = False
         self.drag_start = None
-        self.scale = 1.0
+        self.scale = 0.75
         self.offset = QPoint(0, 0)
+
+        self.ops_timer = None
+        self.timer_active = False
+
+        self.brush_picking_active = False
+        self.brush_size = 5
+
+        self.origin_picking_active = False
+        self.origin = QPoint(0,0)
 
         self.crop_delta_picking_active = False
         self.crop_delta = QPoint(0, 0)
 
+        self.initil_image_load()
+
+    def initil_image_load(self):
+        file_name = "fs/out_img.png"
+        one_shot_fn = lambda : self.load_image(file_name)
+        loaded_shot = lambda : self.one_time_detonation(one_shot_fn)
+        print("+++ timer was set")
+        self.timer_setup(loaded_shot, step_ms=200)
+
 
     def load_image(self, file_name):
+        print("+++ load image")
         self.u_image.load(file_name)
         self.u_mask = QImage(self.u_image.size(), QImage.Format_ARGB32)
         self.u_mask.fill(Qt.black)
@@ -164,13 +180,11 @@ class Canvas(QWidget):
         if self.brush_picking_active:
             self.brush_picking_visualization(painter)
 
-        print("elo")
         if self.crop_delta_picking_active:
-            print("halp")
-            corner_a = QPoint(self.crop_start_pos.x(), self.crop_start_pos.y())
-            corner_b = QPoint(self.crop_start_pos.x(), self.crop_end_pos.y())
-            corner_c = QPoint(self.crop_end_pos.x(), self.crop_end_pos.y())
-            corner_d = QPoint(self.crop_end_pos.x(), self.crop_start_pos.y())
+            corner_a = QPoint(self.origin.x(), self.origin.y())
+            corner_b = QPoint(self.origin.x(), self.origin.y() + self.crop_delta.y())
+            corner_c = QPoint(self.origin.x() + self.crop_delta.y(), self.origin.y() + self.crop_delta.y())
+            corner_d = QPoint(self.origin.x() + self.crop_delta.y(), self.origin.y())
             painter.setPen(QPen(Qt.GlobalColor.black, 4, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
             painter.drawLine(corner_a, corner_b)
             painter.drawLine(corner_b, corner_c)
@@ -199,8 +213,6 @@ class Canvas(QWidget):
         self.last_point = current_point
 
     def mouseMoveEvent(self, event):
-        print("mouse moved")
-
         if event.buttons() & Qt.LeftButton:
             if self.drawing:
                 self.on_drawing(event)
@@ -238,27 +250,38 @@ class Canvas(QWidget):
         self.scale /= 2
         self.update()
 
-    def interval_setup(self, update_fn):
+    def one_time_detonation(self, update_fn):
+        update_fn()
+        self.timer_cleanup()
+
+    def timer_setup(self, update_fn, step_ms=20):
+        if self.timer_active:
+            return
+        
         self.ops_timer = QTimer(self)
         self.ops_timer.timeout.connect(update_fn)
-        self.ops_timer.start(20)
+        self.ops_timer.start(step_ms)
+        self.timer_active = True
 
-    def interval_cleanup(self):
+    def timer_cleanup(self):
+        if not self.timer_active:
+            return 
+        
         self.ops_timer.stop()
         self.ops_timer.deleteLater()
         self.ops_timer = None
+        self.timer_active = False
 
 # brush size
     def brush_size_picking_start(self):
         self.parent.brush_slider.show()
-        self.interval_setup(self.brush_size_picking)
+        self.timer_setup(self.brush_size_picking)
         self.picker = DeltaPicker()
         self.initial_size = self.brush_size
         self.brush_picking_active = True
-
     def brush_size_picking_end(self):
         self.parent.brush_slider.hide()
-        self.interval_cleanup()
+        self.timer_cleanup()
         self.brush_picking_active = False
     
     def brush_size_picking(self):
@@ -267,31 +290,31 @@ class Canvas(QWidget):
         self.update()
 # crop
     def crop_delta_picking_start(self):
-        self.interval_setup(self.crop_delta_picking)
+        self.timer_setup(self.crop_delta_picking)
         self.crop_delta_picking_active = True
         self.picker = DeltaPicker()
         self.update()
-
     def crop_delta_picking_end(self):
         self.crop_delta_picking_active = False
-        self.interval_cleanup()
-        self.update()
+        self.timer_cleanup()
 
     def crop_delta_picking(self):
         self.crop_delta = self.picker.delta()
         self.update()
 
 # crop origin
-    def crop_origin_picking_start(self):
-        self.interval_setup(self.crop_delta_picking)
-        self.crop_origin_picking_active = True
+    def origin_picking_start(self):
+        self.timer_setup(self.crop_origin_picking)
+        self.origin_picking_active = True
         self.picker = DeltaPicker()
+        self.origin_last = self.origin
         self.update()
+    def origin_picking_end(self):
+        self.origin_picking_active = False
+        self.timer_cleanup()
 
     def crop_origin_picking(self):
         pass
-
-
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_B:
