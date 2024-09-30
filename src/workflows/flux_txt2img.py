@@ -9,6 +9,21 @@ from skimage import io
 
 from src.utils_mea import img_pt_2_np
 
+MODELS = []
+
+def load_models_once(base_name):
+    global MODELS
+    if len(MODELS):
+        return tuple(MODELS)
+    
+    model, clip, vae = CheckpointLoaderSimple(base_name)
+    model = DifferentialDiffusion(model)
+
+    MODELS = [model, clip, vae]
+    print("+++ models loaded")
+    return tuple(MODELS)
+
+
 def comfy_flux_txt2img(prompt: str, seed_: int, schnell=True):
     with Workflow():
         seed = seed_
@@ -24,8 +39,7 @@ def comfy_flux_txt2img(prompt: str, seed_: int, schnell=True):
             steps = steps_schnell
             model_name = flux_schenll
 
-        model, clip, vae = CheckpointLoaderSimple(model_name)
-        model = DifferentialDiffusion(model)
+        model, clip, vae = load_models_once(model_name)
 
         empty_neg = CLIPTextEncode('', clip)
         first_desc = CLIPTextEncode(prompt, clip)

@@ -3,23 +3,12 @@ import grpc
 
 from skimage import io
 from utils_mea import img_np_2_pt
-import shutil
 
+from utils import proj_asset
 
 
 def single_channel(pt_image):
     return pt_image[:,:,:, 0:1]
-
-def proj_asset(name):
-    prompt_src = f"assets/{name}"
-    prompt_dst = f"fs/{name}"
-    if not os.path.exists(prompt_dst):
-        if not os.path.exists(prompt_src):
-            raise FileExistsError()
-        shutil.copy(prompt_src, prompt_dst)
-
-    return prompt_dst
-
 
 def load_prompt():
     import json
@@ -74,8 +63,9 @@ def start_client():
     # im curious if model like clude 3.5 or o1 will nail it xD
 
     ssl_options = grpc.ssl_channel_credentials(ROOT_CERTIFICATE)
-    channel = grpc.secure_channel(f"localhost:{port}", ssl_options)
-    # channel = grpc.insecure_channel(f"localhost:{port}")
+    serv_address = f"localhost:{port}"
+    channel = grpc.secure_channel(serv_address, ssl_options)
+    # channel = grpc.insecure_channel(serv_address)
 
     stub = pb2_grpc.ComfyStub(channel)
 

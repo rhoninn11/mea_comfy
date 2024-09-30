@@ -73,8 +73,9 @@ def start_server():
     auth_clinet_too = False
     ssl_options = grpc.ssl_server_credentials(((SERVER_CERTIFICATE_KEY, SERVER_CERTIFICATE),), ROOT_CERTIFICATE, auth_clinet_too)
 
-    server.add_secure_port(f"localhost:{port}", ssl_options)
-    # server.add_insecure_port(f"localhost:{port}")
+    serv_address = f"localhost:{port}"
+    server.add_secure_port(serv_address, ssl_options)
+    # server.add_insecure_port(serv_address)
 
     server.start()
     print("+++ Server started")
