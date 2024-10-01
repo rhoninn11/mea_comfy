@@ -27,15 +27,25 @@ class ImageMaskEditor(QMainWindow):
 
         # Control buttons
         controls_layout = QHBoxLayout()
-        
 
-        self.load_btn = QPushButton('Load Image')
-        self.load_btn.clicked.connect(self.load_image)
-        controls_layout.addWidget(self.load_btn)
+        self.btns: list[QPushButton] = []
+        self.btns_fns: list[tuple] = [
+            ["load image", self.load_image],
+            ["save", self.save_image],
+        ]
 
-        self.save_btn = QPushButton('Save')
-        self.save_btn.clicked.connect(self.save_image)
-        controls_layout.addWidget(self.save_btn)
+        for name, fn in self.btns_fns:
+            btn = QPushButton(name)
+            btn.clicked.connect(fn)
+            controls_layout.addWidget(btn)
+
+        # self.load_btn = QPushButton('Load Image')
+        # self.load_btn.clicked.connect(self.load_image)
+        # controls_layout.addWidget(self.load_btn)
+
+        # self.save_btn = QPushButton('Save')
+        # self.save_btn.clicked.connect(self.save_image)
+        # controls_layout.addWidget(self.save_btn)
 
         self.reset_mask_btn = QPushButton('Reset Mask')
         self.reset_mask_btn.clicked.connect(self.canvas.reset_mask)
