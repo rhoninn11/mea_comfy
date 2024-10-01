@@ -2,6 +2,8 @@ import os
 import torch
 from skimage import io
 
+MAIN_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
 def np_mmm_info(np_array):
     max_val = np_array.max()
     min_val = np_array.min()
@@ -15,13 +17,14 @@ def pt_mmm_info(pt_tensor):
     return f"pt | mean - {mean_val}, min - {min_val}, max - {max_val}"
 
 def img_np_2_pt(img_np, one_minus_one=True, transpose=True):
+    global MAIN_DEVICE
     if transpose:
         img_np = img_np.transpose((2, 0, 1))
 
     img_np = (img_np / 255.0)
     if one_minus_one:
         img_np = img_np * 2 - 1
-    img_pt = torch.from_numpy(img_np).float().cuda()
+    img_pt = torch.from_numpy(img_np).float().to(MAIN_DEVICE)
     
     return img_pt
 
