@@ -64,7 +64,7 @@ def start_client():
 
     credentials = grpc.ssl_channel_credentials(ROOT_CERTIFICATE)
     channel_options = [('grpc.ssl_target_name_override', 'localhost')]
-    serv_address = f"localhost:{port}"
+    serv_address = f"192.168.2.113:{port}"
     channel = grpc.secure_channel(serv_address, credentials, options=channel_options)
     # channel = grpc.insecure_channel(serv_address)
 
@@ -78,12 +78,13 @@ def start_client():
     gen_opt = pb2.Options(prompt=prompt, img_power=img_power)
 
     tick = time.perf_counter()
-    # stub.SetImage(img_proto)
-    # stub.SetMask(mask_proto)
+    stub.SetImage(img_proto)
+    stub.SetMask(mask_proto)
     stub.SetOptions(gen_opt)
     # result_proto = stub.Inpaint(pb2.Empty())
-    # result_proto = stub.Img2Img(pb2.Empty())
-    result_proto = stub.Txt2Img(pb2.Empty())
+    result_proto = stub.Img2Img(pb2.Empty())
+    # result_proto = stub.Txt2Img(pb2.Empty())
+    stub.Inpaint()
     tock = time.perf_counter()
 
     inpaint_np = img_proto_2_np(result_proto)

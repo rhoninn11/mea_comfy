@@ -1,8 +1,8 @@
 import sys
 import PyQt5
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QSlider
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QKeyEvent, QCursor
-from PyQt5.QtCore import Qt, QPoint, QSize, QBuffer, QTimer
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QKeyEvent, QCursor, QBrush
+from PyQt5.QtCore import Qt, QPoint, QSize, QBuffer, QTimer, QRect
 from PIL import Image
 import numpy as np
 import io
@@ -31,37 +31,18 @@ class ImageMaskEditor(QMainWindow):
         self.btns: list[QPushButton] = []
         self.btns_fns: list[tuple] = [
             ["load image", self.load_image],
-            ["save", self.save_image],
+            ["save mask", self.save_image],
+            ["reset mask", self.canvas.reset_mask],
+            ["reset image", self.canvas.reset_image],
+            ["zoom in", self.canvas.zoom_in],
+            ["zoom out", self.canvas.zoom_out],
         ]
 
         for name, fn in self.btns_fns:
             btn = QPushButton(name)
             btn.clicked.connect(fn)
             controls_layout.addWidget(btn)
-
-        # self.load_btn = QPushButton('Load Image')
-        # self.load_btn.clicked.connect(self.load_image)
-        # controls_layout.addWidget(self.load_btn)
-
-        # self.save_btn = QPushButton('Save')
-        # self.save_btn.clicked.connect(self.save_image)
-        # controls_layout.addWidget(self.save_btn)
-
-        self.reset_mask_btn = QPushButton('Reset Mask')
-        self.reset_mask_btn.clicked.connect(self.canvas.reset_mask)
-        controls_layout.addWidget(self.reset_mask_btn)
-
-        self.reset_image_btn = QPushButton('Reset Image')
-        self.reset_image_btn.clicked.connect(self.canvas.reset_image)
-        controls_layout.addWidget(self.reset_image_btn)
-
-        self.zoom_in_btn = QPushButton('Zoom In')
-        self.zoom_in_btn.clicked.connect(self.canvas.zoom_in)
-        controls_layout.addWidget(self.zoom_in_btn)
-
-        self.zoom_out_btn = QPushButton('Zoom Out')
-        self.zoom_out_btn.clicked.connect(self.canvas.zoom_out)
-        controls_layout.addWidget(self.zoom_out_btn)
+            self.btns.append(btn)
 
         # Brush size slider
         self.brush_slider = QSlider(Qt.Horizontal)
@@ -82,7 +63,7 @@ class ImageMaskEditor(QMainWindow):
     def save_image(self):
         file_name = "fs/out_mask.png"
         if file_name:
-            self.canvas.save_image(file_name)
+            self.canvas.save_mask(file_name)
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.isAutoRepeat():
@@ -116,18 +97,22 @@ class Canvas(QWidget):
         super().__init__(parent)
 
         self.resize(QSize(1024, 1024))
-        self.parent = parent
-        self.u_image = QImage(self.size(), QImage.Format_ARGB32)
+        self.parent: ImageMaskEditor = parent
+        self.u_image = QImage(self.size(), QImage.Format_RGBA8888)
         self.u_image.fill(Qt.white)
+        self.u_img_crop = QImage(self.size(), QImage.Format_RGBA8888)
+        self.u_img_crop.fill(Qt.white)
 
-        self.u_mask = QImage(self.size(), QImage.Format_ARGB32)
+        self.u_mask = QImage(self.size(), QImage.Format_RGBA8888)
         self.u_mask.fill(Qt.black)
+        self.u_crop_mask = QImage(self.size(), QImage.Format_RGBA8888)
+        self.u_crop_mask.fill(Qt.black)
 
         self.last_point = QPoint()
         
         self.drawing = False
         self.drag_start = None
-        self.scale = 0.75
+        self.scale = 1
         self.offset = QPoint(0, 0)
 
         self.ops_timer = None
@@ -136,76 +121,190 @@ class Canvas(QWidget):
         self.brush_picking_active = False
         self.brush_size = 5
 
-        self.origin_picking_active = False
-        self.origin = QPoint(0,0)
+        self.crop_origin_active = False
+        self.crop_at = QPoint(0,0)
 
-        self.crop_delta_picking_active = False
-        self.crop_delta = QPoint(0, 0)
+        self.crop_size_active = False
+        self.crop_size = QPoint(0, 0)
+
+        self.crop_render_pnt = QPoint(0, 0)
 
         self.initil_image_load()
+
+        self.key_fns: tuple[tuple] = (
+            (Qt.Key_Q, (self.brush_size_picking_start, self.brush_size_picking_end)),
+            (Qt.Key_W, (self.origin_picking_start, self.origin_picking_start)),
+            (Qt.Key_E, (self.crop_delta_picking_start, self.crop_delta_picking_end)),
+            (Qt.Key_Escape, (self.parent.close, self.parent.close))
+
+        ) 
+    
+# brush size
+    def brush_size_picking_start(self):
+        self.timer_setup(self.brush_size_picking)
+        self.picker = DeltaPicker()
+        self.initial_point = QPoint(self.brush_size, 0)
+        self.brush_picking_active = True
+
+    def brush_size_picking_end(self):
+        self.timer_cleanup()
+        self.brush_picking_active = False
+        self.update()
+    
+    def brush_size_picking(self):
+        delta_point = self.initial_point + self.picker.delta()
+        self.parent.brush_slider.setValue(delta_point.x())
+        self.update()
+# crop
+    def crop_delta_picking_start(self):
+        self.timer_setup(self.crop_delta_picking)
+        self.crop_size_active = True
+        self.picker = DeltaPicker()
+        self.initial_point = self.crop_size
+        self.update()
+
+    def crop_delta_picking_end(self):
+        self.crop_size_active = False
+        self.timer_cleanup()
+        self.update()
+
+    def crop_delta_picking(self):
+        delta_point = self.initial_point + self.picker.delta()
+        self.crop_size = delta_point
+        self.update()
+
+# crop origin
+    def origin_picking_start(self):
+        self.timer_setup(self.crop_origin_picking)
+        self.crop_origin_active = True
+        self.picker = DeltaPicker()
+        self.origin_last = self.crop_at
+        self.update()
+
+    def origin_picking_end(self):
+        self.crop_origin_active = False
+        self.timer_cleanup()
+        self.update()
+
+    def crop_origin_picking(self):
+        delta_point = self.origin_last + self.picker.delta()
+        self.crop_at = delta_point
+        self.update()
+
+# 
 
     def initil_image_load(self):
         file_name = "fs/out_img.png"
         one_shot_fn = lambda : self.load_image(file_name)
         loaded_shot = lambda : self.one_time_detonation(one_shot_fn)
-        print("+++ timer was set")
         self.timer_setup(loaded_shot, step_ms=200)
-
 
     def load_image(self, file_name):
         print("+++ load image")
         self.u_image.load(file_name)
-        self.u_mask = QImage(self.u_image.size(), QImage.Format_ARGB32)
+        size = self.u_image.size()
+
+        crop_rect = (int(0), int(0), size.width(), size.height())
+        self.crop_render_pnt = QPoint(0, 0)
+        self.u_img_crop = self.u_image.copy(*crop_rect)
+
+        self.u_mask = QImage(self.u_image.size(), QImage.Format_RGBA8888)
         self.u_mask.fill(Qt.black)
         self.update()
 
-    def save_image(self, file_name):
+    def save_mask(self, file_name):
         buffer = QBuffer()
         buffer.open(QBuffer.ReadWrite)
-        self.u_mask.save(buffer, "PNG")
+
+        final_mask = self.render_final_mask()
+        final_mask.save(buffer, "PNG")
         combined = Image.open(io.BytesIO(buffer.data()))
         combined.save(file_name)
 
-    def brush_picking_visualization(self, painter):
-        point_a = QPoint(100,100)
-        point_b = QPoint(101,100)
-        painter.setPen(QPen(Qt.GlobalColor.black, self.brush_size+10, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-        painter.drawLine(point_a, point_b)
-        painter.setPen(QPen(Qt.GlobalColor.white, self.brush_size, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-        painter.drawLine(point_a, point_b)
+    def draw_brush_size(self, painter: QPainter):
+        pen_attr = (Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        out_pen = QPen(Qt.black, self.brush_size+10, *pen_attr)
+        in_pen = QPen(Qt.white, self.brush_size, *pen_attr)
+
+        position = QPoint(100, 100)
+
+        painter.setPen(out_pen)
+        painter.drawPoint(position)
+        painter.setPen(in_pen)
+        painter.drawPoint(position)
+
+    def draw_crop_origin(self, painter: QPainter):
+        pen_attr = (Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        out_pen = QPen(Qt.black, 15, *pen_attr)
+        in_pen = QPen(Qt.white, 10, *pen_attr)
+
+        painter.setPen(out_pen)
+        painter.drawPoint(self.crop_at)
+        painter.setPen(in_pen)
+        painter.drawPoint(self.crop_at)
+
+    def draw_crop_frame(self, painter: QPainter):
+        pen_attr = (Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        out_pen = QPen(Qt.black, 10, *pen_attr)
+        in_pen = QPen(Qt.white, 5, *pen_attr)
+
+        pos = (self.crop_at.x(), self.crop_at.y())
+        size = (self.crop_size.x(), self.crop_size.y())
+
+        painter.setPen(out_pen)
+        painter.drawRect(*pos, *size)
+
+        painter.setPen(in_pen)
+        painter.drawRect(*pos, *size)
+
+    def render_final_mask(self):
+
+        in_brush = QBrush(Qt.black, Qt.SolidPattern)
+
+        self.u_crop_mask.fill(Qt.white)
+        painter = QPainter(self.u_crop_mask)
+        pos = (self.crop_render_pnt.x(), self.crop_render_pnt.y())
+        size = (self.crop_size.x(), self.crop_size.y())
+
+        painter.setBrush(in_brush)
+        painter.drawRect(*pos, *size)
+
+        np_mask_buffer_a = self.qt_to_np_img(self.u_mask).astype(np.int16)
+        np_mask_buffer_b = self.qt_to_np_img(self.u_crop_mask).astype(np.int16)
+
+        final_mask = np.clip(np_mask_buffer_a + np_mask_buffer_b, 0, 255).astype(np.uint8)
+        return self.np_to_qt_img(final_mask)
+
+    def qt_to_np_img(self, qt_img: QImage) -> np.ndarray:
+        width = qt_img.width()
+        height = qt_img.height()
+        buffer = qt_img.constBits().asarray(height * width * 4)
+        return np.frombuffer(buffer, dtype=np.uint8).reshape((height, width, 4))
+    
+    def np_to_qt_img(self, np_img: np.ndarray) -> QImage:
+        height, width, _ = np_img.shape
+        qt_img = QImage(np_img.data, width, height, QImage.Format_RGBA8888)
+        qt_img.detach()
+        return qt_img
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.scale(self.scale, self.scale)
         painter.translate(self.offset)
 
-        ss = self.size()
-        new_w = int(ss.width() * self.scale)
-        new_h = int(ss.height() * self.scale)
-        u_image_scaled = self.u_image.scaled(new_w, new_h)
-        
-        
-        painter.drawImage(0, 0, self.u_image)
+        pos = (self.crop_render_pnt.x(), self.crop_render_pnt.y())
+        print(pos)
+        painter.drawImage(*pos, self.u_img_crop)
 
         if self.brush_picking_active:
-            self.brush_picking_visualization(painter)
+            self.draw_brush_size(painter)
 
-        if self.crop_delta_picking_active:
-            print("halo")
-            corner_a = QPoint(self.origin.x(), self.origin.y())
-            corner_b = QPoint(self.origin.x(), self.origin.y() + self.crop_delta.y())
-            corner_c = QPoint(self.origin.x() + self.crop_delta.x(), self.origin.y() + self.crop_delta.y())
-            corner_d = QPoint(self.origin.x() + self.crop_delta.x(), self.origin.y())
-            painter.setPen(QPen(Qt.GlobalColor.black, 6, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-            painter.drawLine(corner_a, corner_b)
-            painter.drawLine(corner_b, corner_c)
-            painter.drawLine(corner_c, corner_d)
-            painter.drawLine(corner_d, corner_a)
-            painter.setPen(QPen(Qt.GlobalColor.white, 4, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-            painter.drawLine(corner_a, corner_b)
-            painter.drawLine(corner_b, corner_c)
-            painter.drawLine(corner_c, corner_d)
-            painter.drawLine(corner_d, corner_a)
+        if self.crop_origin_active:
+            self.draw_crop_origin(painter)
+
+        if self.crop_size_active:
+            self.draw_crop_frame(painter)
+
 
         opacity = 0.5
         painter.setOpacity(opacity)
@@ -288,85 +387,34 @@ class Canvas(QWidget):
         self.ops_timer = None
         self.timer_active = False
 
-# brush size
-    def brush_size_picking_start(self):
-        self.parent.brush_slider.show()
-        self.timer_setup(self.brush_size_picking)
-        self.picker = DeltaPicker()
-        self.initial_size = self.brush_size
-        self.brush_picking_active = True
-    def brush_size_picking_end(self):
-        self.parent.brush_slider.hide()
-        self.timer_cleanup()
-        self.brush_picking_active = False
-    
-    def brush_size_picking(self):
-        new_size = self.initial_size + self.picker.delta().x()
-        self.parent.brush_slider.setValue(new_size)
-        self.update()
-# crop
-    def crop_delta_picking_start(self):
-        self.timer_setup(self.crop_delta_picking)
-        self.crop_delta_picking_active = True
-        self.picker = DeltaPicker()
-        self.update()
-    def crop_delta_picking_end(self):
-        self.crop_delta_picking_active = False
-        self.timer_cleanup()
-
-    def crop_delta_picking(self):
-        self.crop_delta = self.picker.delta()
-        self.update()
-
-# crop origin
-    def origin_picking_start(self):
-        self.timer_setup(self.crop_origin_picking)
-        self.origin_picking_active = True
-        self.picker = DeltaPicker()
-        self.origin_last = self.origin
-        self.update()
-    def origin_picking_end(self):
-        self.origin_picking_active = False
-        self.timer_cleanup()
-
-    def crop_origin_picking(self):
-        pass
-
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_B:
+        
+        if event.key() == Qt.Key_Q:
             self.brush_size_picking_start()
-        elif event.key() == Qt.Key_C:
+        elif event.key() == Qt.Key_W:
+            self.origin_picking_start()
+        elif event.key() == Qt.Key_E:
             self.crop_delta_picking_start()
+        elif event.key() == Qt.Key_R:
+            self.crop_ops()
         elif event.key() == Qt.Key.Key_Escape:
             self.parent.close()
 
     def keyReleaseEvent(self, event):
-        if event.key() == Qt.Key_B:
+        if event.key() == Qt.Key_Q:
             self.brush_size_picking_end()
-        elif event.key() == Qt.Key_C:
+        elif event.key() == Qt.Key_W:
+            self.origin_picking_end()
+        elif event.key() == Qt.Key_E:
             self.crop_delta_picking_end()
 
-    def start_crop(self):
-        print("+++ crop start")
-        self.cropping = True
-        self.crop_start = None
-        self.crop_end = None
-
-    def end_crop(self):
-        print("+++ crop end")
-        if self.crop_start and self.crop_end:
-            x1, y1 = self.crop_start.x(), self.crop_start.y()
-            x2, y2 = self.crop_end.x(), self.crop_end.y()
-            x1, x2 = min(x1, x2), max(x1, x2)
-            y1, y2 = min(y1, y2), max(y1, y2)
-            cropped_image = self.image.copy(x1, y1, x2-x1, y2-y1)
-            cropped_mask = self.u_mask.copy(x1, y1, x2-x1, y2-y1)
-            self.image = cropped_image
-            self.u_mask = cropped_mask
-            self.update()
-        self.cropping = False
-        self.crop_start = None
-        self.crop_end = None
+    def crop_ops(self):
+        self.crop_render_pnt = self.crop_at
+        pnt = self.crop_at
+        sz = self.crop_size
+        crop_rect = (pnt.x(), pnt.y(), sz.x(), sz.y())
+        self.u_img_crop = self.u_image.copy(*crop_rect)
+        self.update()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
