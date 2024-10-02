@@ -15,3 +15,12 @@ def proj_asset(name):
         shutil.copy(prompt_src, prompt_dst)
 
     return prompt_dst
+
+import json
+
+def file2json2obj(json_file):
+    data = None
+    with open(json_file, 'r', encoding='utf-8') as j_file:
+        json_content = j_file.read()
+        data = json.loads(json_content)
+    return data

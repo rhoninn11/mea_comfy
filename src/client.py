@@ -4,7 +4,7 @@ import grpc
 from skimage import io
 from utils_mea import img_np_2_pt
 
-from utils import proj_asset
+from utils import proj_asset, file2json2obj
 
 
 def single_channel(pt_image):
@@ -50,28 +50,25 @@ def start_client():
     # spawn assets in fs
 
     print("+++ Client starting...")
+    config = file2json2obj(proj_asset("client_config.json"))
+    server_address = config["server_addres"]
+    endpoint = f"{server_address}:{port}"
+
+    credentials = grpc.ssl_channel_credentials(ROOT_CERTIFICATE)
+    channel_options = [('grpc.ssl_target_name_override', 'localhost')] # tmp workaround
+    
+    channel = grpc.secure_channel(endpoint, credentials, options=channel_options)
+    stub = pb2_grpc.ComfyStub(channel)
+
+
+
     img_pt = load_image('img.png')
     img_proto = img_pt_2_proto(img_pt)
 
     mask_pt = load_image('mask.png')
     mask_pt = single_channel(mask_pt)
     mask_proto = img_pt_2_proto(mask_pt)
-
-    # ok, so now we can create simple editor for image masking, zooming in and out, as a simple separate toy app
-    # oparating on fs files
-    # 
-    # im curious if model like clude 3.5 or o1 will nail it xD
-
-    credentials = grpc.ssl_channel_credentials(ROOT_CERTIFICATE)
-    channel_options = [('grpc.ssl_target_name_override', 'localhost')]
-    serv_address = f"localhost:{port}"
-    channel = grpc.secure_channel(serv_address, credentials, options=channel_options)
-    # channel = grpc.insecure_channel(serv_address)
-
-    stub = pb2_grpc.ComfyStub(channel)
-
     
-
     prompt = load_prompt()
     print(prompt)
     img_power = 0.2
