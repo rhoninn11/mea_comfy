@@ -35,17 +35,17 @@ def sdxl_inpaint_plus(img: torch.Tensor, mask: torch.Tensor, prompt_text: str):
         print("zaladowany obraz ", src_img.shape)
         print("zaladowana maska ", src_mask.shape)
 
-        soft_mask = ImpactGaussianBlurMask(src_mask, 50, 75)
+        soft_mask = ImpactGaussianBlurMask(src_mask, 50, 100)
         pt_mask = soft_mask.clone().detach()
         pt_mask = torch.stack((pt_mask, pt_mask, pt_mask), dim=-1)
 
 
         model, clip, vae, bnet, model_dd = load_models_once()
 
-        pos_text = CLIPTextEncode('text for inpainting', clip)
+        pos_text = CLIPTextEncode(prompt_text, clip)
         neg_text = CLIPTextEncode('text, watermark', clip)
 
-        bn_mode, bn_pos, bn_neg, bn_latent = BrushNet(model, vae, src_img, src_mask, bnet, pos_text, neg_text, 0.8, 0, 10000)
+        bn_mode, bn_pos, bn_neg, bn_latent = BrushNet(model, vae, src_img, soft_mask, bnet, pos_text, neg_text, 0.8, 0, 10000)
 
         bn_inpaint = KSamplerAdvanced(bn_mode, 'enable', seed, 12, 1, 'euler_ancestral_cfg_pp', 'normal', bn_pos, bn_neg, bn_latent, 0, 12, 'disable')
         bn_img = VAEDecode(bn_inpaint, vae)
