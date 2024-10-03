@@ -28,17 +28,13 @@ def load_models_once():
 
 def sdxl_inpaint_plus(img: torch.Tensor, mask: torch.Tensor, prompt_text: str):
     with Workflow():
-        seed = 0
+        seed = 3
 
         src_img = img
         src_mask = mask[:,:,:,0]
-        print("zaladowany obraz ", src_img.shape)
-        print("zaladowana maska ", src_mask.shape)
-
         soft_mask = ImpactGaussianBlurMask(src_mask, 50, 100)
         pt_mask = soft_mask.clone().detach()
         pt_mask = torch.stack((pt_mask, pt_mask, pt_mask), dim=-1)
-
 
         model, clip, vae, bnet, model_dd = load_models_once()
 
@@ -64,18 +60,6 @@ def sdxl_inpaint_plus(img: torch.Tensor, mask: torch.Tensor, prompt_text: str):
 
         return dd_img_blend
 
-        np_src_img = img_pt_2_np(src_img*(1-pt_mask), False, False)
-        np_out_img = img_pt_2_np(dd_img*pt_mask, False, False)
-        np_out_img_just = img_pt_2_np(dd_img, False, False)
-        np_blend = img_pt_2_np(dd_img_blend, False, False)
-
-        io.imsave("fs/tmp/np_src_img.png", np_src_img)
-        io.imsave("fs/tmp/np_out_img.png", np_out_img)
-        io.imsave("fs/tmp/np_blend.png", np_blend)
-        io.imsave("fs/tmp/esafsdf.png", np_out_img_just)
-
 def workflow(img: torch.Tensor, mask: torch.Tensor, prompt_text: str) -> torch.Tensor:
-    print("obraz ", img.shape)
-    print("maska ", mask.shape)
     result = sdxl_inpaint_plus(img, mask, prompt_text)
     return result

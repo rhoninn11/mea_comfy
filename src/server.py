@@ -4,8 +4,8 @@ import proto.comfy_pb2 as pb2
 import proto.comfy_pb2_grpc as pb2_grpc
 from utils_mea import img_proto_2_pt, img_pt_2_proto, img_proto_2_np
 
-# from workflows.flux_inpaint_blend import workflow as workflow_inpaint
-from workflows.sdxd_inpaint_plus_plus import workflow as workflow_inpaint
+from workflows.flux_inpaint_blend import workflow as workflow_inpaint
+# from workflows.sdxd_inpaint_plus_plus import workflow as workflow_inpaintz
 from workflows.flux_img2img import workflow as workflow_img2img
 from workflows.flux_txt2img import workflow as workflow_tmg2img
 
