@@ -72,7 +72,7 @@ def start_client():
     prompt = load_prompt()
     print(prompt)
     img_power = 0.2
-    gen_opt = pb2.Options(prompt=prompt, img_power=img_power)
+    gen_opt = pb2.Options(prompts=[prompt], img_power=img_power)
 
     tick = time.perf_counter()
     stub.SetImage(img_proto)

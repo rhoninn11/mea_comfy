@@ -15,7 +15,7 @@ class ComfyService(pb2_grpc.ComfyServicer):
         self.for_now = "😇"
         self.img_pt = None
         self.mask_pt = None
-        self.options: pb2.Options = pb2.Options(prompt="flowers on sufrace of the earth")
+        self.options: pb2.Options = pb2.Options(prompts=["flowers on sufrace of the earth"])
 
     def SetImage(self, request: pb2.Image, context):
         print(f"+++ set image")
@@ -31,21 +31,22 @@ class ComfyService(pb2_grpc.ComfyServicer):
         self.options = request
         return pb2.Empty()
     
+    
     def Inpaint(self, request, context) -> pb2.Image:
         print(f"+++ inpaint")
-        prompt = self.options.prompt
+        prompt = self.options.prompts[0]
         img_pt = workflow_inpaint(self.img_pt, self.mask_pt, prompt)
         return img_pt_2_proto(img_pt)
 
     def Img2Img(self, request, context) -> pb2.Image:
         print("+++ img2img")
-        prompt = self.options.prompt
+        prompt = self.options.prompts[0]
         img_power = self.options.img_power
         img_pt = workflow_img2img(self.img_pt, self.mask_pt, prompt, img_power)
         return img_pt_2_proto(img_pt)
     
     def Txt2Img(self, request, context):
-        prompt = self.options.prompt
+        prompt = self.options.prompts[0]
         img_pt = workflow_tmg2img(prompt)
         return img_pt_2_proto(img_pt)
     
