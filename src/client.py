@@ -78,7 +78,7 @@ def start_client():
     stub.SetImage(img_proto)
     stub.SetMask(mask_proto)
     stub.SetOptions(gen_opt)
-    result_proto = stub.Inpaint(pb2.Empty())
+    result_proto = stub.UberInpaint(pb2.Empty())
     # result_proto = stub.Img2Img(pb2.Empty())
     # result_proto = stub.Txt2Img(pb2.Empty())
     tock = time.perf_counter()

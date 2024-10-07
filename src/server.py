@@ -4,8 +4,8 @@ import proto.comfy_pb2 as pb2
 import proto.comfy_pb2_grpc as pb2_grpc
 from utils_mea import img_proto_2_pt, img_pt_2_proto, img_proto_2_np
 
-from workflows.flux_inpaint_blend import workflow as workflow_inpaint
-# from workflows.sdxd_inpaint_plus_plus import workflow as workflow_inpaintz
+from workflows.flux_inpaint_blend import workflow as workflow_inpaint_f
+from workflows.sdxd_inpaint_plus_plus import workflow as workflow_inpaint_xl
 from workflows.flux_img2img import workflow as workflow_img2img
 from workflows.flux_txt2img import workflow as workflow_tmg2img
 
@@ -35,7 +35,14 @@ class ComfyService(pb2_grpc.ComfyServicer):
     def Inpaint(self, request, context) -> pb2.Image:
         print(f"+++ inpaint")
         prompt = self.options.prompts[0]
-        img_pt = workflow_inpaint(self.img_pt, self.mask_pt, prompt)
+        img_pt = workflow_inpaint_xl(self.img_pt, self.mask_pt, prompt)
+        return img_pt_2_proto(img_pt)
+    
+    def UberInpaint(self, request, context) -> pb2.Image:
+        print(f"+++ inpaint")
+        prompt = self.options.prompts[0]
+        img_pt = workflow_inpaint_xl(self.img_pt, self.mask_pt, prompt)
+        img_pt = workflow_inpaint_f(img_pt, self.mask_pt, prompt)
         return img_pt_2_proto(img_pt)
 
     def Img2Img(self, request, context) -> pb2.Image:

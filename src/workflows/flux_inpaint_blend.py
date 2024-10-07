@@ -27,6 +27,8 @@ def load_models_once(base_name):
 def comfy_flux_inpaint(img: torch.Tensor, mask: torch.Tensor, prompt_text: str, schnell=True) -> torch.Tensor:
     with Workflow():
         seed = 3
+        img_power = 0.5
+        steps = 20
 
         flux_dev = 'flux1-dev-fp8.safetensors'
         flux_schenll = 'flux1-schnell-fp8.safetensors'
@@ -35,7 +37,7 @@ def comfy_flux_inpaint(img: torch.Tensor, mask: torch.Tensor, prompt_text: str, 
 
         src_img = img
         src_mask = mask[:,:,:,0]
-        soft_mask = ImpactGaussianBlurMask(src_mask, 50, 75)
+        soft_mask = ImpactGaussianBlurMask(src_mask, 25, 75)
         pt_mask = soft_mask.clone().detach()
         pt_mask = torch.stack((pt_mask, pt_mask, pt_mask), dim=-1)
 
@@ -53,7 +55,8 @@ def comfy_flux_inpaint(img: torch.Tensor, mask: torch.Tensor, prompt_text: str, 
 
         dd_pos, dd_neg, dd_latent = InpaintModelConditioning(first_desc, empty_neg, vae, src_img, soft_mask)
 
-        dd_latent = KSamplerAdvanced(dd_model, 'enable', seed, 20, 1, 'euler', 'simple', dd_pos, dd_neg, dd_latent, 5, 20, 'disable')
+        first_step = int(img_power*steps)
+        dd_latent = KSamplerAdvanced(dd_model, 'enable', seed, 20, 1, 'euler', 'simple', dd_pos, dd_neg, dd_latent, first_step, 20, 'disable')
         dd_img = VAEDecode(dd_latent, vae)
         dd_img = dd_img.to(pt_mask.device)
 

@@ -8,6 +8,7 @@ service Comfy {
   rpc SetMask(Image) returns (Empty) {}
   rpc SetOptions(Options) returns (Empty) {}
   rpc Inpaint(Empty) returns (Image) {}
+  rpc UberInpaint(Empty) returns (Image) {}
   rpc Img2Img(Empty) returns (Image) {}
   rpc Txt2Img(Empty) returns (Image) {}
 }

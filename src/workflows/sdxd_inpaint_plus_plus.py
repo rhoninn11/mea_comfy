@@ -32,7 +32,7 @@ def sdxl_inpaint_plus(img: torch.Tensor, mask: torch.Tensor, prompt_text: str):
 
         src_img = img
         src_mask = mask[:,:,:,0]
-        soft_mask = ImpactGaussianBlurMask(src_mask, 50, 100)
+        soft_mask = ImpactGaussianBlurMask(src_mask, 25, 100)
         pt_mask = soft_mask.clone().detach()
         pt_mask = torch.stack((pt_mask, pt_mask, pt_mask), dim=-1)
 
