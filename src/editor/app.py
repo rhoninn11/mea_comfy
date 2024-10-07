@@ -212,19 +212,19 @@ class Canvas(QWidget):
 
         self.resize(QSize(1024, 1024))
         self.parent: ImageMaskEditor = parent
-        self.u_image = QImage(self.size(), QImage.Format_RGBA8888)
+        self.u_image = QImage(self.size(), QImage.Format_RGB888)
         self.u_image.fill(Qt.white)
-        self.u_img_crop = QImage(self.size(), QImage.Format_RGBA8888)
+        self.u_img_crop = QImage(self.size(), QImage.Format_RGB888)
         self.u_img_crop.fill(Qt.white)
-        self.u_img_scaled = QImage(self.size(), QImage.Format_RGBA8888)
+        self.u_img_scaled = QImage(self.size(), QImage.Format_RGB888)
         self.u_img_scaled.fill(Qt.white)
 
-        self.u_img_out = QImage(self.size(), QImage.Format_RGBA8888)
+        self.u_img_out = QImage(self.size(), QImage.Format_RGB888)
         self.u_img_out.fill(Qt.black)
 
-        self.u_mask = QImage(self.size(), QImage.Format_RGBA8888)
+        self.u_mask = QImage(self.size(), QImage.Format_RGB888)
         self.u_mask.fill(Qt.black)
-        self.u_crop_mask = QImage(self.size(), QImage.Format_RGBA8888)
+        self.u_crop_mask = QImage(self.size(), QImage.Format_RGB888)
         self.u_crop_mask.fill(Qt.black)
 
         self.last_point = QPoint()
@@ -313,7 +313,7 @@ class Canvas(QWidget):
         self.crop_render_pnt = QPoint(0, 0)
         self.u_img_crop = self.u_image.copy(*crop_rect)
 
-        self.u_mask = QImage(self.u_image.size(), QImage.Format_RGBA8888)
+        self.u_mask = QImage(self.u_image.size(), QImage.Format_RGB888)
         self.u_mask.fill(Qt.black)
         self.update()
 
@@ -376,13 +376,17 @@ class Canvas(QWidget):
 
         self.u_crop_mask.fill(Qt.white)
         painter = QPainter(self.u_crop_mask)
-        pos = (self.crop_render_pnt.x(), self.crop_render_pnt.y())
+
+        blend_frame = 25
+        x = self.crop_render_pnt.x() + blend_frame
+        y = self.crop_render_pnt.y() + blend_frame
 
         img = self.u_img_scaled
-        size = (img.size().width(), img.size().height())
+        w = img.size().width() - 2*blend_frame
+        h = img.size().height() - 2*blend_frame
 
         painter.setBrush(in_brush)
-        painter.drawRect(*pos, *size)
+        painter.drawRect(x, y, w, h)
 
         np_mask_buffer_a = self.qt_to_np_img(self.u_mask).astype(np.int16)
         np_mask_buffer_b = self.qt_to_np_img(self.u_crop_mask).astype(np.int16)
@@ -405,12 +409,12 @@ class Canvas(QWidget):
     def qt_to_np_img(self, qt_img: QImage) -> np.ndarray:
         width = qt_img.width()
         height = qt_img.height()
-        buffer = qt_img.constBits().asarray(height * width * 4)
-        return np.frombuffer(buffer, dtype=np.uint8).reshape((height, width, 4))
+        buffer = qt_img.constBits().asarray(height * width * 3)
+        return np.frombuffer(buffer, dtype=np.uint8).reshape((height, width, 3))
     
     def np_to_qt_img(self, np_img: np.ndarray) -> QImage:
         height, width, _ = np_img.shape
-        qt_img = QImage(np_img.data, width, height, QImage.Format_RGBA8888)
+        qt_img = QImage(np_img.data, width, height, QImage.Format_RGB888)
         qt_img.detach()
         return qt_img
 
