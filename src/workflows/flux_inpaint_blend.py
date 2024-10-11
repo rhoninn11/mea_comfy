@@ -24,10 +24,9 @@ def load_models_once(base_name):
     return tuple(MODELS)
 
 
-def comfy_flux_inpaint(img: torch.Tensor, mask: torch.Tensor, prompt_text: str, schnell=True) -> torch.Tensor:
+def comfy_flux_inpaint(img: torch.Tensor, mask: torch.Tensor, prompt_text: str, img_power) -> torch.Tensor:
     with Workflow():
         seed = 3
-        img_power = 0.5
         steps = 20
 
         flux_dev = 'flux1-dev-fp8.safetensors'
@@ -65,6 +64,6 @@ def comfy_flux_inpaint(img: torch.Tensor, mask: torch.Tensor, prompt_text: str, 
 
         return dd_img_blend
 
-def workflow(img: torch.Tensor, mask: torch.Tensor, prompt_text: str) -> torch.Tensor:
-    result = comfy_flux_inpaint(img, mask, prompt_text)
+def workflow(img: torch.Tensor, mask: torch.Tensor, prompt_text: str, img_power: float = 0.5) -> torch.Tensor:
+    result = comfy_flux_inpaint(img, mask, prompt_text, img_power)
     return result

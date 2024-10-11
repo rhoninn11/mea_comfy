@@ -4,11 +4,13 @@ import grpc
 from skimage import io
 from utils_mea import img_np_2_pt
 
-from utils import proj_asset, file2json2obj
+from utils import proj_asset, file2json2obj, ensure_path_exist
 
+def single_channel(pt_img):
+    return pt_img[:,:,:, 0:1]
 
-def single_channel(pt_image):
-    return pt_image[:,:,:, 0:1]
+def tri_channel(pt_img):
+    return pt_img[:,:,:, 0:3]
 
 def load_prompt():
     import json
@@ -25,6 +27,8 @@ def load_image(name):
     img_pt = img_pt.unsqueeze(0)
     return img_pt
 
+def save_img(name: str):
+    name.split()
 
 
 import proto.comfy_pb2 as pb2
@@ -42,7 +46,7 @@ SERVER_CERTIFICATE_KEY = _load_credential_from_file("assets/credentials/localhos
 ROOT_CERTIFICATE = _load_credential_from_file("assets/credentials/root.crt")
 
 import time
-
+import numpy as np
 
 def start_client():
     port = 50051
@@ -60,30 +64,34 @@ def start_client():
     channel = grpc.secure_channel(endpoint, credentials, options=channel_options)
     stub = pb2_grpc.ComfyStub(channel)
 
-
-
     img_pt = load_image('img.png')
-    img_proto = img_pt_2_proto(img_pt)
-
+    img_pt = tri_channel(img_pt)
     mask_pt = load_image('mask.png')
     mask_pt = single_channel(mask_pt)
-    mask_proto = img_pt_2_proto(mask_pt)
-    
+
     prompt = load_prompt()
     print(prompt)
-    img_power = 0.2
-    gen_opt = pb2.Options(prompts=[prompt], img_power=img_power)
 
+    _opt = pb2.Options(
+        prompts=[prompt],
+        img_power=1,
+        inpt_flag=pb2.FLUX)
+    _img = img_pt_2_proto(img_pt)
+    _mask = img_pt_2_proto(mask_pt)
+    
     tick = time.perf_counter()
-    stub.SetImage(img_proto)
-    stub.SetMask(mask_proto)
-    stub.SetOptions(gen_opt)
-    result_proto = stub.UberInpaint(pb2.Empty())
-    # result_proto = stub.Img2Img(pb2.Empty())
-    # result_proto = stub.Txt2Img(pb2.Empty())
+    stub.SetImage(_img)
+    stub.SetMask(_mask)
+    
+    ensure_path_exist("fs/seq")
+    for i, _power in enumerate(np.linspace(0,0.25,5).tolist()):
+        _opt.img_power = _power
+        stub.SetOptions(_opt)
+        _result = stub.Inpaint(pb2.Empty())
+        io.imsave(f'fs/seq/out_img_{i:02}.png', img_proto_2_np(_result))
+
     tock = time.perf_counter()
 
-    inpaint_np = img_proto_2_np(result_proto)
-    print(f"+++ Inpainting took {(tock - tick)} s")
-    io.imsave('fs/out_img.png', inpaint_np)
+    print(f"+++ Inpainting + io took {(tock - tick)} s")
+    
 

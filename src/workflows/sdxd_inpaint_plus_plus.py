@@ -26,9 +26,11 @@ def load_models_once():
     return tuple(MODELS)
 
 
-def sdxl_inpaint_plus(img: torch.Tensor, mask: torch.Tensor, prompt_text: str):
+def sdxl_inpaint_plus(img: torch.Tensor, mask: torch.Tensor, prompt_text: str, img_power: float):
     with Workflow():
         seed = 3
+        steps = 12
+        blen_step = 8
 
         src_img = img
         src_mask = mask[:,:,:,0]
@@ -43,15 +45,17 @@ def sdxl_inpaint_plus(img: torch.Tensor, mask: torch.Tensor, prompt_text: str):
 
         bn_mode, bn_pos, bn_neg, bn_latent = BrushNet(model, vae, src_img, soft_mask, bnet, pos_text, neg_text, 0.8, 0, 10000)
 
-        bn_inpaint = KSamplerAdvanced(bn_mode, 'enable', seed, 12, 1, 'euler_ancestral_cfg_pp', 'normal', bn_pos, bn_neg, bn_latent, 0, 12, 'disable')
+        first_step = int(img_power*steps)
+        bn_inpaint = KSamplerAdvanced(bn_mode, 'enable', seed, 12, 1, 'euler_ancestral_cfg_pp', 'normal', bn_pos, bn_neg, bn_latent, first_step, steps, 'disable')
         bn_img = VAEDecode(bn_inpaint, vae)
         bn_img = bn_img.to(pt_mask.device)
 
         bn_img_blend = bn_img*pt_mask + src_img*(1 - pt_mask)
         bn_img_blend = bn_img_blend.detach()
-
+        
+        
         dd_pos, dd_neg, dd_latent = InpaintModelConditioning(pos_text, neg_text, vae, bn_img_blend, soft_mask)
-        dd_inpaint = KSamplerAdvanced(model_dd, 'enable', seed, 12, 1, 'euler_ancestral_cfg_pp', 'normal', dd_pos, dd_neg, dd_latent, 8, 12, 'disable')
+        dd_inpaint = KSamplerAdvanced(model_dd, 'enable', seed, 12, 1, 'euler_ancestral_cfg_pp', 'normal', dd_pos, dd_neg, dd_latent, blen_step, steps, 'disable')
         dd_img = VAEDecode(dd_inpaint, vae)
         dd_img = dd_img.to(src_img.device)
 
@@ -60,6 +64,6 @@ def sdxl_inpaint_plus(img: torch.Tensor, mask: torch.Tensor, prompt_text: str):
 
         return dd_img_blend
 
-def workflow(img: torch.Tensor, mask: torch.Tensor, prompt_text: str) -> torch.Tensor:
-    result = sdxl_inpaint_plus(img, mask, prompt_text)
+def workflow(img: torch.Tensor, mask: torch.Tensor, prompt_text: str, img_power: float = 0.5) -> torch.Tensor:
+    result = sdxl_inpaint_plus(img, mask, prompt_text, img_power)
     return result

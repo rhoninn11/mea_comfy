@@ -31,18 +31,17 @@ class ComfyService(pb2_grpc.ComfyServicer):
         self.options = request
         return pb2.Empty()
     
-    
     def Inpaint(self, request, context) -> pb2.Image:
-        print(f"+++ inpaint")
-        prompt = self.options.prompts[0]
-        img_pt = workflow_inpaint_xl(self.img_pt, self.mask_pt, prompt)
-        return img_pt_2_proto(img_pt)
-    
-    def UberInpaint(self, request, context) -> pb2.Image:
-        print(f"+++ inpaint")
-        prompt = self.options.prompts[0]
-        img_pt = workflow_inpaint_xl(self.img_pt, self.mask_pt, prompt)
-        img_pt = workflow_inpaint_f(img_pt, self.mask_pt, prompt)
+        opt = self.options
+        prompt = opt.prompts[0]
+        _inpt = opt.inpt_flag
+        _imgp = opt.img_power
+        img_pt = self.img_pt
+        if _inpt in [pb2.SDXL, pb2.BOTH]:
+            img_pt = workflow_inpaint_xl(img_pt, self.mask_pt, prompt, _imgp)
+            img_pt = img_pt.to(self.img_pt.device)
+        if _inpt in [pb2.FLUX, pb2.BOTH]:
+            img_pt = workflow_inpaint_f(img_pt, self.mask_pt, prompt, _imgp)
         return img_pt_2_proto(img_pt)
 
     def Img2Img(self, request, context) -> pb2.Image:

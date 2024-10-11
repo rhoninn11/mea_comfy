@@ -21,6 +21,12 @@ enum ImgType {
   RGBA = 4;
 }
 
+enum InpaintType {
+  SDXL = 0;
+  FLUX = 1;
+  BOTH = 2;
+}
+
 message Empty {}
 
 message Position {
@@ -52,5 +58,6 @@ message Options {
   repeated string prompts = 1;
   float img_power = 2;
   int32 seed = 3;
+  InpaintType inpt_flag = 4;
 }
 
