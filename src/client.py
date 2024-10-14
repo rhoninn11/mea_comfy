@@ -48,6 +48,21 @@ ROOT_CERTIFICATE = _load_credential_from_file("assets/credentials/root.crt")
 import time
 import numpy as np
 
+def sequence_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
+    save_dir = "fs/seq"
+    ensure_path_exist(save_dir)
+    for i, _power in enumerate(np.linspace(0,0.25,5).tolist()):
+        opt.img_power = _power
+        stub.SetOptions(opt)
+        _result = stub.Inpaint(pb2.Empty())
+        io.imsave(f'{save_dir}/out_img_{i:02}.png', img_proto_2_np(_result))
+
+def single_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
+    save_dir = "fs"
+    stub.SetOptions(opt)
+    _result = stub.Inpaint(pb2.Empty())
+    io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))
+
 def start_client():
     port = 50051
 
@@ -83,12 +98,8 @@ def start_client():
     stub.SetImage(_img)
     stub.SetMask(_mask)
     
-    ensure_path_exist("fs/seq")
-    for i, _power in enumerate(np.linspace(0,0.25,5).tolist()):
-        _opt.img_power = _power
-        stub.SetOptions(_opt)
-        _result = stub.Inpaint(pb2.Empty())
-        io.imsave(f'fs/seq/out_img_{i:02}.png', img_proto_2_np(_result))
+    sequence_gen(_opt, stub)
+    single_gen(_opt, stub)
 
     tock = time.perf_counter()
 
