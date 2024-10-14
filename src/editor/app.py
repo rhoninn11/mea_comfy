@@ -1,6 +1,7 @@
 import sys
 import PyQt5
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QSlider
+from PyQt5.QtWidgets import QStackedLayout, QStackedWidget
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QKeyEvent, QCursor, QBrush
 from PyQt5.QtCore import Qt, QPoint, QSize, QBuffer, QTimer, QRect
 from PIL import Image
@@ -8,6 +9,8 @@ import numpy as np
 import io
 
 from typing import Callable
+
+from src.editor.interop_utils import IMG_FORMAT, np_to_qt_img, qt_to_np_img
 
 
 class ImageMaskEditor(QMainWindow):
@@ -22,11 +25,20 @@ class ImageMaskEditor(QMainWindow):
         # Main widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
+        
         main_layout = QVBoxLayout(central_widget)
 
+        second_on_stack = QWidget()
+        test_btn = QPushButton(second_on_stack)
+
         # Canvas
-        self.canvas = Canvas(self)
-        main_layout.addWidget(self.canvas)
+        self.stack = QStackedWidget()
+        main_layout.addWidget(self.stack)
+
+        self.canvas = Canvas(self, self.swipe_stack)
+        self.stack.addWidget(self.canvas)
+        self.stack.addWidget(second_on_stack)
+        
 
         # Control buttons
         controls_layout = QHBoxLayout()
@@ -34,7 +46,6 @@ class ImageMaskEditor(QMainWindow):
         self.btns: list[QPushButton] = []
         self.btns_fns: list[tuple] = [
             ["load image", self.load_image],
-            ["save mask", self.save_image],
             ["reset mask", self.canvas.reset_mask],
             ["reset image", self.canvas.reset_image],
             ["zoom in", self.canvas.zoom_in],
@@ -47,15 +58,7 @@ class ImageMaskEditor(QMainWindow):
             controls_layout.addWidget(btn)
             self.btns.append(btn)
 
-        # Brush size slider
-        # self.brush_slider = QSlider(Qt.Horizontal)
-        # self.brush_slider.setMinimum(4)
-        # self.brush_slider.setMaximum(256)
-        # self.brush_slider.setValue(16)
-        # self.brush_slider.valueChanged.connect(self.canvas.set_brush_size)
-        # self.brush_slider.hide()
 
-        # main_layout.addWidget(self.brush_slider)
         main_layout.addLayout(controls_layout)
 
     def load_image(self):
@@ -81,7 +84,16 @@ class ImageMaskEditor(QMainWindow):
         event.accept()
 
     def mouseMoveEvent(self, event):
-        print("mouse moved xD")
+        pass
+
+    def swipe_stack(self):
+        idx = self.stack.currentIndex()
+        max_idx = self.stack.count() - 1
+        idx += 1
+        if idx > max_idx:
+            idx = 0
+        
+        self.stack.setCurrentIndex(idx)
 
 class DeltaPicker():
     def __init__(self):
@@ -139,9 +151,6 @@ class EditorHub():
         self.edit_mode = False
 
     
-
-
-
 class LivePropertyEdit():
     def __init__(self, editor: EditorHub, to_update: QWidget):
         self.editor_ref = editor
@@ -207,31 +216,32 @@ class PropertySpawner():
 
 
 class Canvas(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, fn):
         super().__init__(parent)
 
         self.resize(QSize(1024, 1024))
         self.parent: ImageMaskEditor = parent
-        self.u_image = QImage(self.size(), QImage.Format_RGB888)
+        self.u_image = QImage(self.size(), IMG_FORMAT)
         self.u_image.fill(Qt.white)
-        self.u_img_crop = QImage(self.size(), QImage.Format_RGB888)
+        self.u_img_crop = QImage(self.size(), IMG_FORMAT)
         self.u_img_crop.fill(Qt.white)
-        self.u_img_scaled = QImage(self.size(), QImage.Format_RGB888)
+        self.u_img_scaled = QImage(self.size(), IMG_FORMAT)
         self.u_img_scaled.fill(Qt.white)
 
-        self.u_img_out = QImage(self.size(), QImage.Format_RGB888)
+        self.u_img_out = QImage(self.size(), IMG_FORMAT)
         self.u_img_out.fill(Qt.black)
 
-        self.u_mask = QImage(self.size(), QImage.Format_RGB888)
-        self.u_mask.fill(Qt.black)
-        self.u_crop_mask = QImage(self.size(), QImage.Format_RGB888)
-        self.u_crop_mask.fill(Qt.black)
+        self.u_mask = QImage(self.size(), IMG_FORMAT)
+        self.u_mask.fill(Qt.transparent)
+        self.u_crop_mask = QImage(self.size(), IMG_FORMAT)
+        self.u_crop_mask.fill(Qt.transparent)
 
         self.last_point = QPoint()
+        self.fn_ref = fn
         
         self.drawing = False
         self.drag_start = None
-        self.scale = 1
+        self.scale = 0.5
         self.offset = QPoint(0, 0)
 
         self.scales = [2, 1.5, 1, 0.75, 0.5, 0.33, 0.25]
@@ -253,6 +263,7 @@ class Canvas(QWidget):
         self.key_fns: list[tuple] = [
             (Qt.Key_A, (self.crop_ops, lambda: None)),
             (Qt.Key_Escape, (self.parent.close, self.parent.close)),
+            (Qt.Key_Plus, (self.fn_ref, lambda: None)),
         ]
         
         edit_keys = [Qt.Key_Q, Qt.Key_W, Qt.Key_E, Qt.Key_R, Qt.Key_T]
@@ -313,8 +324,8 @@ class Canvas(QWidget):
         self.crop_render_pnt = QPoint(0, 0)
         self.u_img_crop = self.u_image.copy(*crop_rect)
 
-        self.u_mask = QImage(self.u_image.size(), QImage.Format_RGB888)
-        self.u_mask.fill(Qt.black)
+        self.u_mask = QImage(self.u_image.size(), IMG_FORMAT)
+        self.reset_mask()
         self.update()
 
     def save_mask(self, file_name):
@@ -335,41 +346,36 @@ class Canvas(QWidget):
         pil_img = Image.open(io.BytesIO(buffer.data()))
         pil_img.save(file_name)
 
-    def draw_brush_size(self, painter: QPainter):
+    def outline_pens(self, smaller_size, bigger_size):
         pen_attr = (Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-        out_pen = QPen(Qt.black, self.brush_size+10, *pen_attr)
-        in_pen = QPen(Qt.white, self.brush_size, *pen_attr)
+        out_pen = QPen(Qt.black, bigger_size, *pen_attr)
+        in_pen = QPen(Qt.white, smaller_size, *pen_attr)
+        return out_pen, in_pen
+    
+    def draw_w_outline(self, pens, painter: QPainter, fn):
+        for pen in pens:
+            painter.setPen(pen)
+            fn()
 
+
+    def draw_brush_size(self, painter: QPainter):
         position = QPoint(100, 100)
-
-        painter.setPen(out_pen)
-        painter.drawPoint(position)
-        painter.setPen(in_pen)
-        painter.drawPoint(position)
+        pens = self.outline_pens(self.brush_size, self.brush_size+10)
+        draw_fn = lambda: painter.drawPoint(position)
+        self.draw_w_outline(pens, painter, draw_fn)
 
     def draw_crop_origin(self, painter: QPainter):
-        pen_attr = (Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-        out_pen = QPen(Qt.black, 15, *pen_attr)
-        in_pen = QPen(Qt.white, 10, *pen_attr)
-
-        painter.setPen(out_pen)
-        painter.drawPoint(self.crop_at)
-        painter.setPen(in_pen)
-        painter.drawPoint(self.crop_at)
+        pens = self.outline_pens(10, 15)
+        draw_fn = lambda: painter.drawPoint(self.crop_at)
+        self.draw_w_outline(pens, painter, draw_fn)
 
     def draw_crop_frame(self, painter: QPainter):
-        pen_attr = (Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-        out_pen = QPen(Qt.black, 10, *pen_attr)
-        in_pen = QPen(Qt.white, 5, *pen_attr)
-
         pos = (self.crop_at.x(), self.crop_at.y())
         size = (self.crop_size.x(), self.crop_size.y())
-
-        painter.setPen(out_pen)
-        painter.drawRect(*pos, *size)
-
-        painter.setPen(in_pen)
-        painter.drawRect(*pos, *size)
+        
+        pens = self.outline_pens(5, 10)
+        draw_fn = lambda: painter.drawRect(*pos, *size)
+        self.draw_w_outline(pens, painter, draw_fn)
 
     def render_final_mask(self):
         in_brush = QBrush(Qt.black, Qt.SolidPattern)
@@ -388,35 +394,21 @@ class Canvas(QWidget):
         painter.setBrush(in_brush)
         painter.drawRect(x, y, w, h)
 
-        np_mask_buffer_a = self.qt_to_np_img(self.u_mask).astype(np.int16)
-        np_mask_buffer_b = self.qt_to_np_img(self.u_crop_mask).astype(np.int16)
+        np_mask_buffer_a = qt_to_np_img(self.u_mask).astype(np.int16)
+        np_mask_buffer_b = qt_to_np_img(self.u_crop_mask).astype(np.int16)
 
         final_mask = np.clip(np_mask_buffer_a + np_mask_buffer_b, 0, 255).astype(np.uint8)
-        return self.np_to_qt_img(final_mask)
+        return np_to_qt_img(final_mask)
     
     def render_final_image(self):
         self.u_img_out.fill(Qt.black)
         painter = QPainter(self.u_img_out)
-
 
         img = self.u_img_scaled
         pos = (self.crop_render_pnt.x(), self.crop_render_pnt.y())
 
         painter.drawImage(*pos, img)
         return self.u_img_out
-        
-
-    def qt_to_np_img(self, qt_img: QImage) -> np.ndarray:
-        width = qt_img.width()
-        height = qt_img.height()
-        buffer = qt_img.constBits().asarray(height * width * 3)
-        return np.frombuffer(buffer, dtype=np.uint8).reshape((height, width, 3))
-    
-    def np_to_qt_img(self, np_img: np.ndarray) -> QImage:
-        height, width, _ = np_img.shape
-        qt_img = QImage(np_img.data, width, height, QImage.Format_RGB888)
-        qt_img.detach()
-        return qt_img
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -426,8 +418,6 @@ class Canvas(QWidget):
         x = self.crop_render_pnt.x()
         y = self.crop_render_pnt.y()
         pos = (x, y)
-        # print(pos)
-        # painter.drawImage(*pos, self.u_img_crop)
 
         self.img_scale_ops()
         painter.drawImage( x,y, self.u_img_scaled)
@@ -483,12 +473,12 @@ class Canvas(QWidget):
         self.brush_size = size
 
     def reset_mask(self):
-        self.u_mask.fill(Qt.black)
+        self.u_mask.fill(Qt.transparent)
         self.update()
 
     def reset_image(self):
         self.u_image.fill(Qt.white)
-        self.u_mask.fill(Qt.black)
+        self.reset_mask()
         self.scale = 1.0
         self.offset = QPoint(0, 0)
         self.update()
