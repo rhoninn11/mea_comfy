@@ -15,6 +15,7 @@ def main():
     parser.add_argument("-demo", action="store_true", help="run demo script for comfy ui inpaint")
     parser.add_argument("-server", action="store_true", help="start grpc for comfy ui inpaint")
     parser.add_argument("-client", action="store_true", help="start grpc client for comfy ui inpaint")
+    parser.add_argument("-editor", action="store_true", help="start simple Qt inpaint editor")
 
     args = parser.parse_args()
     if args.demo:
@@ -26,6 +27,9 @@ def main():
     if args.client:
         from src.client import start_client as client
         client()
+    if args.editor:
+        from src.editor.app import main as editor
+        editor()
     else:
         parser.print_help()
 

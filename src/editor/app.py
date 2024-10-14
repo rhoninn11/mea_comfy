@@ -529,8 +529,11 @@ class Canvas(QWidget):
         self.save_image("fs/img.png")
         self.update()
 
-if __name__ == '__main__':
+def main():
     app = QApplication(sys.argv)
     ex = ImageMaskEditor()
     ex.show()
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+   main()

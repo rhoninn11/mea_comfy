@@ -6,10 +6,10 @@ from utils_mea import img_np_2_pt
 
 from utils import proj_asset, file2json2obj, ensure_path_exist
 
-def single_channel(pt_img):
+def uno_channel(pt_img):
     return pt_img[:,:,:, 0:1]
 
-def tri_channel(pt_img):
+def trio_channel(pt_img):
     return pt_img[:,:,:, 0:3]
 
 def load_prompt():
@@ -80,9 +80,9 @@ def start_client():
     stub = pb2_grpc.ComfyStub(channel)
 
     img_pt = load_image('img.png')
-    img_pt = tri_channel(img_pt)
+    img_pt = trio_channel(img_pt)
     mask_pt = load_image('mask.png')
-    mask_pt = single_channel(mask_pt)
+    mask_pt = uno_channel(mask_pt)
 
     prompt = load_prompt()
     print(prompt)
