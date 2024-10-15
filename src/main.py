@@ -21,13 +21,13 @@ def main():
     if args.demo:
         from src.demo import inpaint_demo as demo
         demo()
-    if args.server:
+    elif args.server:
         from src.server import start_server as serve
         serve()
-    if args.client:
+    elif args.client:
         from src.client import start_client as client
         client()
-    if args.editor:
+    elif args.editor:
         from src.editor.app import main as editor
         editor()
     else:

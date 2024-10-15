@@ -24,7 +24,7 @@ def load_models_once(base_name):
     return tuple(MODELS)
 
 
-def comfy_flux_txt2img(prompt: str, seed_: int, schnell=True):
+def comfy_flux_txt2img(prompt: str, seed_: int, schnell=False):
     with Workflow():
         seed = seed_
         steps_dev = 20

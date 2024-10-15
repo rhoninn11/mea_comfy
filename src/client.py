@@ -59,8 +59,19 @@ def sequence_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
 
 def single_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     save_dir = "fs"
+
+    opt.img_power = 0.0
+    opt.inpt_flag = pb2.SDXL
     stub.SetOptions(opt)
     _result = stub.Inpaint(pb2.Empty())
+    print("first step")
+
+    opt.img_power = 0.35
+    opt.inpt_flag = pb2.FLUX
+    stub.SetOptions(opt)
+    stub.SetImage(_result)
+    _result = stub.Inpaint(pb2.Empty())
+    print("second step")
     io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))
 
 def start_client():
@@ -98,7 +109,7 @@ def start_client():
     stub.SetImage(_img)
     stub.SetMask(_mask)
     
-    sequence_gen(_opt, stub)
+    # sequence_gen(_opt, stub)
     single_gen(_opt, stub)
 
     tock = time.perf_counter()

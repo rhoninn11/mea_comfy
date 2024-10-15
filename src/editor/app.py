@@ -2,16 +2,29 @@ import sys
 import PyQt5
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QSlider
 from PyQt5.QtWidgets import QStackedLayout, QStackedWidget
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QKeyEvent, QCursor, QBrush
-from PyQt5.QtCore import Qt, QPoint, QSize, QBuffer, QTimer, QRect
+from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QKeyEvent, QBrush
+from PyQt5.QtCore import Qt, QPoint, QSize, QBuffer
 from PIL import Image
 import numpy as np
 import io
 
 from typing import Callable
 
-from src.editor.interop_utils import IMG_FORMAT, np_to_qt_img, qt_to_np_img
+from editor.org_vol_1 import edit_action, rt_edit_organizer
+from editor.org_vol_1 import update_timer
+from editor.utils_img import IMG_FORMAT, np_to_qt_img, qt_to_np_img
+from src.utils import proj_asset
 
+class q_test_stack(QStackedWidget):
+
+    def swipe(self):
+        idx = self.currentIndex()
+        max_idx = self.count() - 1
+        idx += 1
+        if idx > max_idx:
+            idx = 0
+    
+        self.setCurrentIndex(idx)
 
 class ImageMaskEditor(QMainWindow):
     def __init__(self):
@@ -32,10 +45,10 @@ class ImageMaskEditor(QMainWindow):
         test_btn = QPushButton(second_on_stack)
 
         # Canvas
-        self.stack = QStackedWidget()
+        self.stack = q_test_stack()
         main_layout.addWidget(self.stack)
 
-        self.canvas = Canvas(self, self.swipe_stack)
+        self.canvas = Canvas(self, self.stack.swipe)
         self.stack.addWidget(self.canvas)
         self.stack.addWidget(second_on_stack)
         
@@ -62,14 +75,12 @@ class ImageMaskEditor(QMainWindow):
         main_layout.addLayout(controls_layout)
 
     def load_image(self):
-        file_name = "fs/img_in.png"
-        if file_name:
-            self.canvas.load_image(file_name)
+        file_name = proj_asset("img_in.png")
+        self.canvas.load_image(file_name)
 
     def save_image(self):
-        file_name = "fs/mask.png"
-        if file_name:
-            self.canvas.save_mask(file_name)
+        file_name = proj_asset("mask.png")
+        self.canvas.save_mask(file_name)
 
     def keyPressEvent(self, event: QKeyEvent):
         if event.isAutoRepeat():
@@ -77,124 +88,14 @@ class ImageMaskEditor(QMainWindow):
         self.canvas.keyPressEvent(event)
         event.accept()
 
-    def keyReleaseEvent(self, event):
+    def keyReleaseEvent(self, event: QKeyEvent):
         if event.isAutoRepeat():
             return
         self.canvas.keyReleaseEvent(event)
         event.accept()
 
-    def mouseMoveEvent(self, event):
-        pass
-
-    def swipe_stack(self):
-        idx = self.stack.currentIndex()
-        max_idx = self.stack.count() - 1
-        idx += 1
-        if idx > max_idx:
-            idx = 0
-        
-        self.stack.setCurrentIndex(idx)
-
-class DeltaPicker():
-    def __init__(self):
-        self.ref_point = QCursor.pos()
-
-    def delta(self):
-        c_now = QCursor.pos()
-        delta_x = c_now.x() - self.ref_point.x()
-        delta_y = c_now.y() - self.ref_point.y()
-        return QPoint(delta_x, delta_y)
-
-class TimerOps():
-    def __init__(self, widget: QWidget):
-        self.ops_timer = None
-        self.in_edit = False
-        self.widget_ref = widget
-
-    def timer_setup(self, update_fn, step_ms=20):
-        if self.in_edit:
-            return
-        
-        self.ops_timer = QTimer(self.widget_ref)
-        self.ops_timer.timeout.connect(update_fn)
-        self.ops_timer.start(step_ms)
-        self.in_edit = True
-
-    def timer_cleanup(self):
-        if not self.in_edit:
-            return 
-        
-        self.ops_timer.stop()
-        self.ops_timer.deleteLater()
-        self.ops_timer = None
-        self.in_edit = False
-
-    def one_time_detonation(self, update_fn):
-        update_fn()
-        self.timer_cleanup()
-
-class EditorHub():
-    def __init__(self, widget: QWidget):
-
-        self.widget_ref = widget
-        self.edit_interval = TimerOps(self.widget_ref)
-        self.edit_mode_exit()
-
-        self.edit_starts = []
-        self.edit_ends = []
-
-
-    def edit_mode_enter(self):
-        self.edit_mode = True
-
-    def edit_mode_exit(self):
-        self.edit_mode = False
-
-    
-class LivePropertyEdit():
-    def __init__(self, editor: EditorHub, to_update: QWidget):
-        self.editor_ref = editor
-        self.initial_point = QPoint(0,0)
-        self.active = False
-        self.to_update = to_update
-
-        self.bind_signals(lambda: QPoint(0,0), lambda point: print(point))
-
-    def bind_signals(self, init_fn: Callable[[], QPoint], edit_fn: Callable[[QPoint], None]):
-        self.init_sample = init_fn
-        self.edit_sample = edit_fn
-
-    def edit_start(self):
-        e = self.editor_ref
-        if e.edit_mode:
-            return
-        
-        e.edit_mode_enter()
-        e.edit_interval.timer_setup(self.edit_update)
-        self.picker = DeltaPicker()
-        self.initial_point = self.init_sample()
-        self.active = True
-
-        self.to_update.update()
-
-    def edit_end(self):
-        e = self.editor_ref
-        if not e.edit_mode:
-            return
-        
-        e.edit_mode_exit()
-        e.edit_interval.timer_cleanup()
-        self.active = False
-
-        self.to_update.update()
-    
-    def edit_update(self):
-        delta_point = self.initial_point + self.picker.delta()
-        self.edit_sample(delta_point)
-        self.to_update.update()
-
 class PropertySpawner():
-    def __init__(self, editor: EditorHub):
+    def __init__(self, editor: rt_edit_organizer):
         self.editor_ref = editor
 
     def __enter__(self):
@@ -203,11 +104,11 @@ class PropertySpawner():
     def __exit__(self, *args):
         pass
 
-    def add_property_edit(self, 
+    def add_edit_action(self, 
                           init_fn: Callable[..., QPoint], 
-                          edit_fn: Callable[[QPoint], None]) -> LivePropertyEdit:
+                          edit_fn: Callable[[QPoint], None]) -> edit_action:
         args = [self.editor_ref, self.editor_ref.widget_ref]
-        prop = LivePropertyEdit(*args)
+        prop = edit_action(*args)
         prop.bind_signals(init_fn, edit_fn)
 
         self.editor_ref.edit_starts.append(prop.edit_start)
@@ -249,11 +150,11 @@ class Canvas(QWidget):
         self.img_scale = self.select_img_scale()
         
 
-        self.ops_timer = TimerOps(self)
+        self.ops_timer = update_timer(self)
 
         self.crop_render_pnt = QPoint(0, 0)
 
-        self.initil_image_load()
+        self.initial_img_load()
 
         self.brush_size = 5
         self.crop_at = QPoint(0,0)
@@ -300,17 +201,17 @@ class Canvas(QWidget):
         return self.scales[-1]
 
     def editor_init(self):
-        self.editor = EditorHub(self)
+        self.editor = rt_edit_organizer(self)
         with PropertySpawner(self.editor) as fab:
-            self.brush_size_prop = fab.add_property_edit(self.brush_size_init, self.brush_size_edit)
-            self.crop_at_prop = fab.add_property_edit(self.crop_at_init, self.crop_at_edit)
-            self.crop_size_prop = fab.add_property_edit(self.crop_size_init, self.crop_size_edit)
-            self.scale_proxy_prop = fab.add_property_edit(self.scale_proxy_init, self.scale_proxy_edit)
+            self.brush_size_prop = fab.add_edit_action(self.brush_size_init, self.brush_size_edit)
+            self.crop_at_prop = fab.add_edit_action(self.crop_at_init, self.crop_at_edit)
+            self.crop_size_prop = fab.add_edit_action(self.crop_size_init, self.crop_size_edit)
+            self.scale_proxy_prop = fab.add_edit_action(self.scale_proxy_init, self.scale_proxy_edit)
 
 
-    def initil_image_load(self):
+    def initial_img_load(self):
         t = self.ops_timer
-        file_name = "fs/img_in.png"
+        file_name = proj_asset("img.png")
         one_shot_fn = lambda : self.load_image(file_name)
         loaded_shot = lambda : t.one_time_detonation(one_shot_fn)
         t.timer_setup(loaded_shot, step_ms=200)
