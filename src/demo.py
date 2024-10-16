@@ -3,6 +3,7 @@ import os
 import skimage.io as io
 
 from utils_mea import img_np_2_pt, img_pt_2_np
+from utils import proj_asset
 
 from workflows.flux_inpaint_blend import workflow as workflow_inpaint
 from workflows.flux_img2img import workflow as workflow_img2img
@@ -18,10 +19,10 @@ def single_channel(pt_image):
 
 
 def inpaint_demo():
-    img_file = 'assets/img.png'
+    img_file = proj_asset("img.png")
     img_pt = load_image(img_file)
 
-    mask_file = 'assets/mask.png'
+    mask_file = proj_asset("mask.png")
     mask_pt = load_image(mask_file)
     mask_pt = single_channel(mask_pt)
 

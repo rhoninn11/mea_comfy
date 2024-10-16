@@ -1,40 +1,26 @@
-
-MODEL_DIR="$COMFY/models"
-
-download_xl() {
-    MODEL_URL="https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0_0.9vae.safetensors"
-    MODEL_FILE="sd_xl_base_1.0_0.9vae.safetensors"
-    COMFY_UI_MODEL_DIR="$MODELS_DIR/checkpoints"
-
-    MODEL_PATH="${COMFY_UI_MODEL_DIR}/${MODEL_FILE}"
-
-    if [ -f "$MODEL_PATH" ]; then
-        echo "+++ ${MODEL_FILE} already exists"
-        return
-    fi
-
-    cd $COMFY_UI_MODEL_DIR
-    wget $MODEL_URL
-    echo "+++ ${MODEL_FILE} downloaded" 
-    return
-}
-
-download_xl_inpaint() {
-    MODEL_URL="https://huggingface.co/diffusers/stable-diffusion-xl-1.0-inpainting-0.1/resolve/main/unet/diffusion_pytorch_model.fp16.safetensors"
-    MODEL_FILE="sd_xl_1.0_inpaint.safetensors"
-
-    COMFY_UI_MODEL_DIR="/workspace/comfy_ui/models/unet"
-    MODEL_PATH="${COMFY_UI_MODEL_DIR}/${MODEL_FILE}"
-
-    if [ -f "$MODEL_PATH" ]; then
-        echo "+++ ${MODEL_FILE} already exists"
-        return
-    fi
-    
-    cd $COMFY_UI_MODEL_DIR
-    wget $MODEL_URL -O $MODEL_FILE
-    echo "+++ ${MODEL_NAME} downloaded"
-    return
+{
+    "models":[
+        {
+            "link": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0_0.9vae.safetensors",
+            "name": "sd_xl_base_1.0_0.9vae.safetensors",
+            "dst": "/checkpoints"
+        },
+        {
+            "link": "https://huggingface.co/diffusers/stable-diffusion-xl-1.0-inpainting-0.1/resolve/main/unet/diffusion_pytorch_model.fp16.safetensors",
+            "name": "sd_xl_1.0_inpaint.safetensors",
+            "dst": "models/unet"
+        },
+        {
+            "link": "",
+            "name": "",
+            "dst": ""
+        },
+        {
+            "link": "",
+            "name": "",
+            "dst": ""
+        },
+    ]
 }
 
 download_clip_standard() {

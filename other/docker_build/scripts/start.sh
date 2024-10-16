@@ -38,13 +38,14 @@ start_comfy_ui() {
     echo "ComfyUI Lab started"
 }
 
-export COMFY="/workspace/ComfyUI"
+
 
 start_nginx
 
 execute_script "/pre_start.sh" "Running pre-start script..."
 
 echo "Pod Started"
+echo "+++ confi at $COMFY"
 
 start_comfy_ui
 start_jupyter

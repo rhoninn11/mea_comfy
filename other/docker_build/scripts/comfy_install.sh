@@ -7,11 +7,11 @@ COMFY_MNG_VER="2.50.1"
 COMFY_MNG_REPO="https://github.com/ltdrdata/ComfyUI-Manager.git"
 
 setup_comfy_ui() {
-    COMFY_UI_DIR="/workspace/comfy_ui"
-    CUSTOM_NODE_DIR="$COMFY_UI_DIR/custom_nodes"
+    export COMFY="/workspace/comfy_ui"
+    CUSTOM_NODE_DIR="$COMFY/custom_nodes"
     MANAGER_DIR="$CUSTOM_NODE_DIR/ComfyUI-Manager"
     # if dir not exists
-    if [ ! -d "$COMFY_UI_DIR" ]; then
+    if [ ! -d "$COMFY" ]; then
         echo "Cloning ComfyUI..."
         cd /workspace
         git clone --branch $COMFY_VER --single-branch $COMFY_REPO
@@ -26,11 +26,13 @@ setup_comfy_ui() {
         git clone --branch $COMFY_MNG_VER --single-branch $COMFY_MNG_REPO
     fi
 
-    cd $COMFY_UI_DIR
+    cd $COMFY
     pip install -r requirements.txt
     cd $MANAGER_DIR
     pip install -r requirements.txt
     echo "+++ ComfyUI setup finished"
+
+    export COMFY="/workspace/ComfyUI"
 }
 
 setup_comfy_ui
