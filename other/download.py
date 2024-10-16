@@ -48,6 +48,9 @@ flux_schenll = "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux
 flux_dev_gguf_5b = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q5_0.gguf"
 flux_dev_gguf_4b = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q4_0.gguf"
 
+# ctrl nets
+flux_inpaint_cnet = "https://huggingface.co/alimama-creative/FLUX.1-dev-Controlnet-Inpainting-Alpha/resolve/main/diffusion_pytorch_model.safetensors"
+
 
 
 comfy_path = os.getenv('COMFY')
@@ -59,6 +62,7 @@ loras_path = os.path.join(comfy_path, "models/loras/")
 inpaint_path = os.path.join(comfy_path, "models/inpaint/")
 unet_path = os.path.join(comfy_path, "models/unet/")
 checkpoints_path = os.path.join(comfy_path, "models/checkpoints")
+controlnet_path = os.path.join(comfy_path, "models/controlnet")
 
 download_file(loras_path, offset_lora)
 download_file(loras_path, hyper_12_steps)
@@ -69,4 +73,4 @@ download_file(checkpoints_path, photopedia_ref)
 download_file(checkpoints_path, flux_dev)
 download_file(checkpoints_path, flux_schenll)
 
-download_file(unet_path, flux_dev_gguf_5b)
+download_file(controlnet_path, flux_inpaint_cnet)
