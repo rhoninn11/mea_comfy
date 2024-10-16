@@ -1,8 +1,6 @@
-FROM runpod/pytorch:2.0.1-py3.10-cuda11.8.0-devel-ubuntu22.04
+FROM runpod/pytorch:2.0.1-py3.10-cuda11.8.0-devel-ubuntu22.04 as base
 
-COPY model_download.sh /script_src/model_download.sh
-COPY start.sh /start.sh
-COPY baseline_snapshot_act_ii.json /baseline_snapshot.json
-COPY wget_links /wget_links
+COPY scripts /scripts
+RUN ./scripts/comfy_install.sh 
 
-CMD ["/start.sh"]
+CMD ["/scripts/start.sh"]

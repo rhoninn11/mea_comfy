@@ -1,0 +1,1 @@
+docker build --progress=plain --no-cache -t comfy_docker .
