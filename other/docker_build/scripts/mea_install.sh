@@ -5,18 +5,17 @@ REPO_NAME="mea_comfy_wrap"
 
 
 setup_mea() {
-    MEA_DIR="/workspace"
+    PROJ_DIR="/mea"
+    MEA_DIR="$PROJ_DIR/$REPO_NAME"
+    
     # if dir not exists
-    if [ ! -d "$COMFY_UI_DIR" ]; then
-        echo "Cloning ComfyUI..."
-        cd $MEA_DIR
-        # git clone --branch $COMFY_VER --single-branch $COMFY_REPO
+    if [ ! -d "$MEA_DIR" ]; then
+        echo "Cloning $REPO_NAME..."
+        cd $PROJ_DIR
         git clone $MEA_REPO
-
+        cd $MEA_DIR
+        # meaby some scripcts eventualy
     fi
-
-    cd $CUSTOM_NODE_DIR
-
 
 }
 

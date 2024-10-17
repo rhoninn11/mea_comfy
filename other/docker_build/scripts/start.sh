@@ -32,30 +32,24 @@ start_jupyter() {
 
 start_comfy_ui() {
     echo "Starting ComfyUI..."
-    COMFY_UI_DIR="/workspace/comfy_ui"
+    COMFY_UI_DIR="/mea/comfy_ui"
     cd $COMFY_UI_DIR
-    nohup python main.py --listen --port 8188 &> /comfy_ui_nohup.log &
-    echo "ComfyUI Lab started"
+    python main.py --listen --port 8188
 }
 
 
+source /etc/mea_env
 
 start_nginx
-
 execute_script "/pre_start.sh" "Running pre-start script..."
-
 echo "Pod Started"
 echo "+++ confi at $COMFY"
-
-start_comfy_ui
-start_jupyter
-
 export_env_vars
-
 execute_script "/post_start.sh" "Running post-start script..."
-
 echo "Start script(s) finished, pod is ready to use."
-sleep 10s
+
+start_jupyter
+sleep 2s
 jupyter server list
 
-sleep infinity
+start_comfy_ui
