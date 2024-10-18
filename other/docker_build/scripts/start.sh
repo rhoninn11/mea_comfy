@@ -39,6 +39,7 @@ start_comfy_ui() {
 
 
 source /etc/mea_env
+printenv | grep MEA
 
 start_nginx
 execute_script "/pre_start.sh" "Running pre-start script..."

@@ -14,3 +14,5 @@ services:
             capabilities: [gpu]
     volumes:
       - $COMFY/models:/mea/comfy_ui/models
+      - $MEA/fs/docker/plug_snap:/mea/comfy_ui/custom_nodes/ComfyUI-Manager/snapshots
+      - $MEA/fs/docker/out:/mea/comfy_ui/custom_nodes/ComfyUI-Manager/snapshots
