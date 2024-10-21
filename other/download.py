@@ -15,7 +15,7 @@ def download_model(model, to):
         print(f"+++ model already downloaded at {model_file}")
         return
     
-    download_file(model["url"], model_file)
+    download_file(model["link"], model_file)
 
 
 def download_file(url, dst_file):
@@ -56,6 +56,7 @@ to_spawn_list = json.load(f)["to_spawn"]
 f.close()
 
 for model in models_list:
+    print(model)
     if model["name"] in to_spawn_list:
         download_model(model, os.path.join(comfy_path, "models"))
 
