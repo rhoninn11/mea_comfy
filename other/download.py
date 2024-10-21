@@ -4,75 +4,59 @@ from tqdm import tqdm
 import os
 
 def ensure_path_exist(path):
-    if os.path.exists(path):
+    if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 
-def download_file(save_path, url):
+def download_model(model, to):
+    model_dir = os.path.join(to, model["dst"])
+    ensure_path_exist(model_dir)
+    model_file = os.path.join(model_dir, model["file"])
+    if os.path.exists(model_file):
+        print(f"+++ model already downloaded at {model_file}")
+        return
+    
+    download_file(model["url"], model_file)
+
+
+def download_file(url, dst_file):
     block_kb = 64
     block_size = block_kb * 1024
     
-    ensure_path_exist(save_path)
-    filename = url.split("/")[-1]
-    dst_file = os.path.join(save_path, filename)
-    if os.path.exists(dst_file):
-        print(f"+++ model already downloaded:D ({filename})")
-        return
-    
     resp = requests.get(url, stream=True)
     total_size = resp.headers.get("content-length", 0)
-    print(f"+++ downloading model ({filename}) size of {total_size}B")
+    print(f"+++ downloading file size of {total_size}B")
 
     progres_bar = tqdm(total=int(total_size), unit="B")
-    file = open(os.path.join(save_path, filename), "wb")
+    file = open(dst_file, "wb")
     for chunk in resp.iter_content(block_size):
         progres_bar.update(len(chunk))
         file.write(chunk)
     file.close()
 
-def ospth(path: str) -> str:
-    if os.name == "nt":
-        path = path.replace("/", "\\")
-    return path
-
-
-offset_lora = "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_offset_example-lora_1.0.safetensors"
-# hyper_2_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-2steps-lora.safetensors"
-# hyper_8_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-8steps-CFG-lora.safetensors"
-hyper_12_steps = "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-12steps-CFG-lora.safetensors"
-# brushnet = "https://huggingface.co/Kijai/BrushNet-fp16/resolve/main/brushnet_random_mask_fp16.safetensors" #fuck this is for 1.5 
-brushnet_ref = "https://huggingface.co/grzelakadam/brushnet_xl_models/resolve/main/random_mask_brushnet_ckpt_sdxl_v0.safetensors"
-photopedia_ref = "https://huggingface.co/grzelakadam/mmodel_ref/resolve/main/photopediaXL_45.safetensors"
-
-flux_dev = "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors"
-flux_schenll = "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors"
-flux_dev_gguf_5b = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q5_0.gguf"
-flux_dev_gguf_4b = "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q4_0.gguf"
-
-# ctrl nets
-flux_inpaint_cnet = [
-"https://huggingface.co/alimama-creative/FLUX.1-dev-Controlnet-Inpainting-Alpha/resolve/main/diffusion_pytorch_model.safetensors",
-]
-
-
+model_file = "assets/comfy/models.json"
+spawn_file = "assets/comfy/to_spawn.json"
+yes = os.path.exists(model_file) and os.path.exists(spawn_file)
+if not yes:
+    print(f"File not found {model_file} or {spawn_file}.")
+    print("try to run from root directory")
+    exit()
 
 comfy_path = os.getenv('COMFY')
 if comfy_path is None:
     print("!!! path to ComfyUI must be set in env variable 'COMFY'")
     exit()
 
-loras_path = os.path.join(comfy_path, "models/loras/")
-inpaint_path = os.path.join(comfy_path, "models/inpaint/")
-unet_path = os.path.join(comfy_path, "models/unet/")
-checkpoints_path = os.path.join(comfy_path, "models/checkpoints")
-controlnet_path = os.path.join(comfy_path, "models/controlnet")
+import json
 
-download_file(loras_path, offset_lora)
-download_file(loras_path, hyper_12_steps)
+f = open(model_file, "r")
+models_list = json.load(f)["models"]
+f.close()
+f = open(spawn_file, "r")
+to_spawn_list = json.load(f)["to_spawn"]
+f.close()
 
-# download_file(inpaint_path, brushnet_ref)
+for model in models_list:
+    if model["name"] in to_spawn_list:
+        download_model(model, os.path.join(comfy_path, "models"))
 
-download_file(checkpoints_path, photopedia_ref)
-download_file(checkpoints_path, flux_dev)
-# download_file(checkpoints_path, flux_schenll)
-
-download_file(controlnet_path, flux_inpaint_cnet[0])
+print("+++ all requested models spawned")

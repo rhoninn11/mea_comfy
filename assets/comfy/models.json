@@ -45,7 +45,7 @@
         {
             "name": "xl_lora_4_step",
             "link": "https://huggingface.co/ByteDance/Hyper-SD/resolve/main/Hyper-SDXL-4steps-lora.safetensors",
-            "file": "Hyper-SDXL-2steps-lora.safetensors",
+            "file": "Hyper-SDXL-4steps-lora.safetensors",
             "dst": "loras"
         },
         {
@@ -59,6 +59,24 @@
             "link": "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_offset_example-lora_1.0.safetensors",
             "file": "sd_xl_offset_example-lora_1.0.safetensors",
             "dst": "loras"
+        },
+        {
+            "name": "flux_dev",
+            "link": "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors",
+            "file": "flux1-dev-fp8.safetensors",
+            "dst": "checkpoints"
+        },
+        {
+            "name": "flux_schenll",
+            "link": "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors",
+            "file": "flux1-schnell-fp8.safetensors",
+            "dst": "checkpoints"
+        },
+        {
+            "name": "flux_paint_cnet",
+            "link": "https://huggingface.co/alimama-creative/FLUX.1-dev-Controlnet-Inpainting-Alpha/resolve/main/diffusion_pytorch_model.safetensors",
+            "file": "flux1-schnell-fp8.safetensors",
+            "dst": "controlnet"
         }
     ]
 }

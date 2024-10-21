@@ -6,7 +6,7 @@ COMFY_REPO="https://github.com/comfyanonymous/ComfyUI.git"
 COMFY_MNG_VER="2.50.1"
 COMFY_MNG_REPO="https://github.com/ltdrdata/ComfyUI-Manager.git"
 
-COMFY_SCRIPT_VER="0.5.1"
+COMFY_SCRIPT_VER="v0.5.1"
 COMFY_SCRIPT_REPO="https://github.com/Chaoses-Ib/ComfyScript.git"
 
 
@@ -40,9 +40,6 @@ setup_comfy_ui() {
     if [ ! -d "$CSCRIPT_DIR" ]; then
         echo "Cloning $NAME..."
         git clone --branch $COMFY_SCRIPT_VER --single-branch $COMFY_SCRIPT_REPO
-        cd $CSCRIPT_DIR
-        python -m pip install -e ".[default]"
-        cd $PLUGIN_DIR
     fi
 
     cd $COMFY_DIR
