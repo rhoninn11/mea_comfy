@@ -77,6 +77,24 @@
             "link": "https://huggingface.co/alimama-creative/FLUX.1-dev-Controlnet-Inpainting-Alpha/resolve/main/diffusion_pytorch_model.safetensors",
             "file": "flux1-inpaint.safetensors",
             "dst": "controlnet"
+        },
+        {
+            "name": "flux_real_fix",
+            "link": "https://huggingface.co/XLabs-AI/flux-RealismLora/resolve/main/lora.safetensors",
+            "file": "flux-RealismLora.safetensors",
+            "dst": "loras"
+        },
+        {
+            "name": "flux_blur_fix",
+            "link": "https://huggingface.co/Shakker-Labs/FLUX.1-dev-LoRA-AntiBlur/resolve/main/FLUX-dev-lora-AntiBlur.safetensors",
+            "file": "flux-AntiBlur.safetensors",
+            "dst": "loras"
+        },
+        {
+            "name": "flux_boreal",
+            "link": "https://huggingface.co/kudzueye/boreal-flux-dev-v2/resolve/main/boreal-v2.safetensors",
+            "file": "flux-dev-boreal-v2.safetensors",
+            "dst": "loras"
         }
     ]
 }
