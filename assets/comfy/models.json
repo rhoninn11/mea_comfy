@@ -67,6 +67,12 @@
             "dst": "checkpoints"
         },
         {
+            "name": "pixel_dev",
+            "link": "https://huggingface.co/mikeyandfriends/PixelWave_FLUX.1-dev_03/resolve/main/pixelwave_flux1_dev_fp8_03.safetensors",
+            "file": "pixel-flux-dev-fp8.safetensors",
+            "dst": "checkpoints"
+        },
+        {
             "name": "flux_schenll",
             "link": "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors",
             "file": "flux1-schnell-fp8.safetensors",

@@ -1,3 +1,3 @@
 {
-    "to_spawn": ["flux_dev", "flux_paint_cnet", "flux_real_fix", "flux_blur_fix", "flux_boreal"]
+    "to_spawn": ["pixel_dev", "flux_paint_cnet", "flux_real_fix", "flux_blur_fix", "flux_boreal"]
 }
