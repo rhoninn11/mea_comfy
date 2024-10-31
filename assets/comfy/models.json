@@ -60,6 +60,10 @@
             "file": "sd_xl_offset_example-lora_1.0.safetensors",
             "dst": "loras"
         },
+
+
+
+        
         {
             "name": "flux_dev",
             "link": "https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/flux1-dev-fp8.safetensors",
@@ -101,6 +105,21 @@
             "link": "https://huggingface.co/kudzueye/boreal-flux-dev-v2/resolve/main/boreal-v2.safetensors",
             "file": "flux-dev-boreal-v2.safetensors",
             "dst": "loras"
+        },
+
+
+
+        {
+            "name": "sd35_mid",
+            "link": "https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/resolve/main/sd3.5_medium_incl_clips_t5xxlfp8scaled.safetensors",
+            "file": "stable-diffusion-3.5-mid-fp8.safetensors",
+            "dst": "checkpoints"
+        },
+        {
+            "name": "sd35_big",
+            "link": "https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/resolve/main/sd3.5_large_fp8_scaled.safetensors",
+            "file": "stable-diffusion-3.5-big-fp8.safetensors",
+            "dst": "checkpoints"
         }
     ]
 }

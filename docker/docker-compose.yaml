@@ -1,7 +1,6 @@
 services:
-  mea_comfy:
-    container_name: first_gpu_instance
-    image: rhoninn11/comfy_docker:v1
+  container_name: comfy_no_0
+    image: rhoninn11/comfy_docker:v2
     # By default Part-DB will be running under Port 8080, you can change it here
     ports:
       - '8188:8188'
