@@ -48,6 +48,7 @@ setup_comfy_ui() {
     pip install -r requirements.txt
     cd $CSCRIPT_DIR
     python -m pip install -e ".[default]"
+    pip install --upgrade transformers==4.45.0
 
     echo "+++ ComfyUI setup finished"
 

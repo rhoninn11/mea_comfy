@@ -120,6 +120,25 @@
             "link": "https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/resolve/main/sd3.5_large_fp8_scaled.safetensors",
             "file": "stable-diffusion-3.5-big-fp8.safetensors",
             "dst": "checkpoints"
+        },
+        {
+            "name": "clip_l",
+            "link": "https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/resolve/main/text_encoders/clip_l.safetensors",
+            "file": "clip_l.safetensors",
+            "dst": "clip"
+        },
+        {
+            "name": "clip_g",
+            "link": "https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/resolve/main/text_encoders/clip_g.safetensors",
+            "file": "clip_g.safetensors",
+            "dst": "clip"
+        },
+        {
+            "name": "t5_xxl",
+            "link": "https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/resolve/main/text_encoders/t5xxl_fp16.safetensors",
+            "file": "t5xxl_fp16.safetensors",
+            "dst": "clip"
         }
+
     ]
 }

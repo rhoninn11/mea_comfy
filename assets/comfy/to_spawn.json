@@ -1,3 +1,4 @@
 {
-    "to_spawn": ["pixel_dev", "flux_paint_cnet", "flux_real_fix", "flux_blur_fix", "flux_boreal", "sd35_mid", "sd35_big"]
+    "to_spawn": ["pixel_dev", "flux_paint_cnet", "flux_real_fix", "flux_blur_fix", "flux_boreal",
+     "sd35_mid", "sd35_big", "clip_l", "clip_g", "t5_xxl"]
 }
