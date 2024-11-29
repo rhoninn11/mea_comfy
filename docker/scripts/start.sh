@@ -37,6 +37,15 @@ start_comfy_ui() {
     python main.py --listen --port 8188
 }
 
+start_ollama() {
+    ollama server
+}
+
+start_nothing() {
+    sleep 1000
+
+}
+
 
 source /etc/mea_env
 printenv | grep MEA
@@ -49,8 +58,9 @@ export_env_vars
 execute_script "/post_start.sh" "Running post-start script..."
 echo "Start script(s) finished, pod is ready to use."
 
-start_jupyter
+# start_jupyter
 sleep 2s
 jupyter server list
 
-start_comfy_ui
+# start_comfy_ui
+start_nothing

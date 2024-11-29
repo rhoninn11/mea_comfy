@@ -8,7 +8,12 @@ RUN echo export PROJ_ROOT="/mea" >> /etc/mea_env
 
 RUN source /etc/mea_env && ./scripts/comfy_install.sh 
 RUN echo export COMFY="/mea/comfy_ui" >> /etc/mea_env
+
 RUN source /etc/mea_env && ./scripts/mea_install.sh
+# propably also need add to mea_env 
+
+RUN source /etc/mea_env && ./scripts/ollama_install.sh
+
 RUN cat /etc/mea_env
 
 CMD ["/scripts/start.sh"]

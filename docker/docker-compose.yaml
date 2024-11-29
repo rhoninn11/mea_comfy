@@ -1,7 +1,7 @@
 services:
   comfy_ui:
     container_name: comfy_no_0
-    image: rhoninn11/comfy_docker:v2
+    image: rhoninn11/comfy_docker:v3
     # By default Part-DB will be running under Port 8080, you can change it here
     ports:
       - '8188:8188'
@@ -10,9 +10,11 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['0']
+            device_ids: ['1']
             capabilities: [gpu]
     volumes:
       - $COMFY/models:/mea/comfy_ui/models
       - $MEA/fs/docker/plug_snap:/mea/comfy_ui/custom_nodes/ComfyUI-Manager/snapshots
       - $MEA/fs/docker/out:/mea/comfy_ui/custom_nodes/ComfyUI-Manager/snapshots
+      - $MEA/docker/scripts:/mea/scripts
+    command: /mea/scripts/start_alt.sh
