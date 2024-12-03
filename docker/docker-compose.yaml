@@ -3,8 +3,9 @@ services:
     container_name: comfy_no_0
     image: rhoninn11/comfy_docker:v3
     # By default Part-DB will be running under Port 8080, you can change it here
-    ports:
+    # ports:
       - '8188:8188'
+      # - '11434:11434'
     deploy:
       resources:
         reservations:
@@ -17,4 +18,5 @@ services:
       - $MEA/fs/docker/plug_snap:/mea/comfy_ui/custom_nodes/ComfyUI-Manager/snapshots
       - $MEA/fs/docker/out:/mea/comfy_ui/custom_nodes/ComfyUI-Manager/snapshots
       - $MEA/docker/scripts:/mea/scripts
+      - $OLLAMA/models:/root/.ollama/models
     command: /mea/scripts/start_alt.sh

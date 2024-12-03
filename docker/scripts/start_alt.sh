@@ -6,5 +6,11 @@ start_comfy_ui() {
     python main.py --listen --port 8188
 }
 
+start_ollama() {
+    ollama serve
+    # on port 11434
+}
+
 
 start_comfy_ui
+# start_ollama
