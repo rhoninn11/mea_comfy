@@ -11,4 +11,4 @@ dkr_shell:
 	cd docker && docker exec -it comfy_no_0 bash
 
 mea_comfy_models:
-	cd others && python download.py
+	cd other && python download.py
