@@ -15,8 +15,10 @@ setup_comfy_ui() {
     PROJ_DIR="$PROJ_ROOT"
     echo +++ PROJ_ROOT at $PROJ_DIR
 
+    # TODO: that should be readed from env
     COMFY_DIR="$PROJ_DIR/comfy_ui"
     echo export COMFY="$COMFY_DIR" >> /etc/mea_env
+    
     PLUGIN_DIR="$COMFY_DIR/custom_nodes"
     
     if [ ! -d "$COMFY_DIR" ]; then

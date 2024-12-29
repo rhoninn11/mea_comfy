@@ -3,7 +3,7 @@ start_nginx() {
     service nginx start
 }
 
-# Execute script if exists
+# Execute script if exists, leftofer from runpod, but may be essention for that container to run ok on runpod
 execute_script() {
     local script_path=$1
     local script_msg=$2
@@ -43,7 +43,6 @@ start_ollama() {
 
 start_nothing() {
     sleep 1000
-
 }
 
 
