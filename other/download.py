@@ -1,7 +1,25 @@
+import os
+
+
+MODEL_FILE = "assets/comfy/models.json"
+PCKG_FILE = "assets/comfy/model_pckg.json"
+PACK_NAME = "xl_pack"
+
+yes = os.path.exists(MODEL_FILE) and os.path.exists(PCKG_FILE)
+if not yes:
+    print(f"File not found {MODEL_FILE} or {PCKG_FILE}.")
+    print("try to run from root directory")
+    exit()
+
+COMFY_PATH = os.getenv('COMFY')
+if COMFY_PATH is None:
+    print("!!! path to ComfyUI must be set in env variable 'COMFY'")
+    exit()
+
+
 import requests
 from tqdm import tqdm
 
-import os
 
 def ensure_path_exist(path):
     if not os.path.exists(path):
@@ -33,31 +51,24 @@ def download_file(url, dst_file):
         file.write(chunk)
     file.close()
 
-model_file = "assets/comfy/models.json"
-spawn_file = "assets/comfy/to_spawn.json"
-yes = os.path.exists(model_file) and os.path.exists(spawn_file)
-if not yes:
-    print(f"File not found {model_file} or {spawn_file}.")
-    print("try to run from root directory")
-    exit()
-
-comfy_path = os.getenv('COMFY')
-if comfy_path is None:
-    print("!!! path to ComfyUI must be set in env variable 'COMFY'")
-    exit()
-
 import json
 
-f = open(model_file, "r")
-models_list = json.load(f)["models"]
-f.close()
-f = open(spawn_file, "r")
-to_spawn_list = json.load(f)["to_spawn"]
-f.close()
+def main():
+    f = open(MODEL_FILE, "r")
+    models_list = json.load(f)["models"]
+    f.close()
 
-for model in models_list:
-    print(model)
-    if model["name"] in to_spawn_list:
-        download_model(model, os.path.join(comfy_path, "models"))
+    f = open(PCKG_FILE, "r")
+    packs = json.load(f)
+    f.close()
+    
+    to_spawn_list = packs[PACK_NAME]
 
-print("+++ all requested models spawned")
+    for model in models_list:
+        print(model)
+        if model["name"] in to_spawn_list:
+            download_model(model, os.path.join(COMFY_PATH, "models"))
+
+    print("+++ all requested models spawned")
+
+main()

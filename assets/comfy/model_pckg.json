@@ -1,0 +1,4 @@
+{
+    "to_spawn": [ "flux_schenll", "flux_dev"],
+    "xl_pack": ["xl_vanila", "xl_lora_12_step", "xl_lora_noffset"]
+}
