@@ -5,7 +5,7 @@ services:
     # By default Part-DB will be running under Port 8080, you can change it here
     ports:
       - '8188:8188'
-      # - '11434:11434'
+      - '11434:11434'
     deploy:
       resources:
         reservations:

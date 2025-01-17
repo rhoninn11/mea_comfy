@@ -16,6 +16,7 @@ def main():
     parser.add_argument("-server", action="store_true", help="start grpc for comfy ui inpaint")
     parser.add_argument("-client", action="store_true", help="start grpc client for comfy ui inpaint")
     parser.add_argument("-editor", action="store_true", help="start simple Qt inpaint editor")
+    parser.add_argument("-llm", action="store_true", help="start ollama tinkering script")
 
     args = parser.parse_args()
     if args.demo:
@@ -27,6 +28,9 @@ def main():
     elif args.client:
         from src.client import start_client as client
         client()
+    elif args.llm:
+        from llm import main as app
+        app()
     elif args.editor:
         from src.editor.app import main as editor
         editor()
