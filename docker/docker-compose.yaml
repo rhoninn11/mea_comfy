@@ -3,15 +3,15 @@ services:
     container_name: comfy_no_0
     image: rhoninn11/comfy_docker:v3
     # By default Part-DB will be running under Port 8080, you can change it here
-    # ports:
+    ports:
       - '8188:8188'
-      # - '11434:11434'
+      - '11434:11434'
     deploy:
       resources:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['1']
+            device_ids: ['0']
             capabilities: [gpu]
     volumes:
       - $COMFY/models:/mea/comfy_ui/models
