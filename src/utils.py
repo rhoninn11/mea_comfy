@@ -1,11 +1,13 @@
 import os
 import shutil
 
+import json
+
 def ensure_path_exist(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 
-def proj_asset(asset_path):
+def proj_asset(asset_path: str) -> str:
     prompt_src = f"assets/{asset_path}"
     prompt_dst = f"fs/{asset_path}"
     
@@ -17,7 +19,18 @@ def proj_asset(asset_path):
 
     return prompt_dst
 
-import json
+
+class Proj:
+    prefix: str = ""
+
+    def __init__(self, dir: str):
+        self.prefix = dir
+
+    def asset(self, asset_path: str) -> str:
+        return proj_asset(f"{self.prefix}/{asset_path}")
+
+
+
 
 def file2json2obj(json_file):
     data = None

@@ -5,3 +5,4 @@ grpcio-tools
 scikit-image
 opencv-python
 PyQt5
+ollama

@@ -17,11 +17,11 @@ services:
       - $COMFY/models:/mea/comfy_ui/models
       - $OLLAMA/models:/root/.ollama/models
       
-      - $MEA/docker/system:/mea/scripts
+      - $MEA/docker/system:/mea/system
       - $MEA/assets:/mea/dev_bridge/assets
       - $MEA/other:/mea/dev_bridge/misc
 
       - $MEA/fs/docker/plug_snap:/mea/comfy_ui/custom_nodes/ComfyUI-Manager/snapshots
       - $MEA/fs/docker/out:/mea/comfy_ui/output
-    command: /scripts/start_alt.sh
+    command: /mea/system/start_alt.sh
     # command: sleep 1000 

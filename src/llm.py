@@ -7,12 +7,14 @@ from pydantic import BaseModel
 
 from ollama import chat
 
-from utils import proj_asset
+from utils import proj_asset, Proj
 
 class Role(str, Enum):
     SYSTEM = "system"
     USER = "user"
     AI = "assistant"
+
+ROLES = [Role.SYSTEM, Role.USER, Role.AI]
 
 class Message(BaseModel):
     role: Role
@@ -23,56 +25,60 @@ class Message(BaseModel):
         use_enum_values = True
 
 class SimpleChat(BaseModel):
-    system: List[Message] = []
-    user: list[Message] = []
-    ai: list[Message] = []
+
+
+    msg_list: list[Message]
+    counter: dict[Role, int] = {}
+    finished: bool = False
     
     def add_ai_resp(self, text: str):
         ai_msg = Message(
             role=Role.AI,
             content=text
         )
-        self.ai.append(ai_msg)
-    
-    def render_dialog(self) -> tuple[list[dict[str, any]], bool]:
-        msg_list = [self.system[0].model_dump()]
-        for i, usr_msg in enumerate(self.user):
-            msg_list.append(usr_msg.model_dump())
-            if len(self.ai) <= i:
-                break
-            msg_list.append(self.ai[i].model_dump())
+        self.msg_list.append(ai_msg)
 
-        finished = len(self.user) == len(self.ai)
-        return msg_list, finished
+    def render(self) -> tuple[list[dict[str, any]], bool]:
+        out_list: list = []
+        for msg in self.msg_list:
+            out_list.append(msg.model_dump())
+        finish = self.finished
+        self.finished = True
+        return out_list, finish
 
-        
 
-def about_pic_chat(img_file) -> SimpleChat:
-    sys_msg = Message(
+class ChatFmt:
+    data: str = ""        
+
+def spaw_chat(chat: ChatFmt, samples: list[str]) -> SimpleChat:
+    msg_list = []
+
+    sys = Message(
         role=Role.SYSTEM,
-        content="You are now roleplaing an older man his speach became wise after all this years, "
-            "you have some problems with alcohol, not counting some other addictions, "
-            "tough lack, as they said. "
-            "But allways start your response with \"Oh my dear\" and always try to be speculative",
+        content="As for now moment your role is uncpecified",
     )
+    msg_list.append(sys)
 
-    usr_msg = Message(
+    # usr = Message(
+    #     role=Role.USER,
+    #     content="I have for you one picture",
+    #     images=[samples[0]]
+    # )
+    # msg_list.append(usr)
+    
+    # usr = Message(
+    #     role=Role.USER,
+    #     content="I and the second one of course",
+    #     images=[samples[1]]
+    # )
+    # msg_list.append(usr)
+
+    usr = Message(
         role=Role.USER,
-        content="What do you see on that picture",
-        images=[img_file]
+        content="Tell me some story from your life in the province",
     )
-
-    ust_msg_2 = Message(
-        role=Role.USER,
-        content="Who do you think, could that be? What type of personality would choose to put these on"
-    )
-
-    a = SimpleChat(
-        system=[sys_msg.model_dump()],
-        user=[usr_msg.model_dump(), ust_msg_2.model_dump()],
-        ai=[]
-    )
-    return a
+    msg_list.append(usr)
+    return SimpleChat(msg_list=msg_list)
 
 def ollama_process(model_name, chat_to_process, v=False):
 
@@ -92,23 +98,33 @@ def ollama_process(model_name, chat_to_process, v=False):
     return "".join(tokens)
  
 def pick_model() -> str:
-    models = ollama.list().models
+    models: list = ollama.list().models
+    prefered_model: str = "llava-lama3"
+
+    for model_bucket in models:
+        if model_bucket.model == prefered_model:
+            return prefered_model
+        
     if len(models) == 0:
         print("!!! no models, exit. Install something with \"ollama pull MODEL_NAME\"")
+        raise IndexError()
 
     name = models[0].model
     return name
 
 def main(): 
-    sample_file = proj_asset("comfy/txt_to_img_flux_b.png")
-    
+    proj = Proj("llm")
+
+    samples = [ proj.asset("image_a.png"),
+                proj.asset("image_b.png")]
+
     model_name = pick_model()
     print(f"+++ starting with model {model_name}")
 
-    cultural_heritage_chat = about_pic_chat(sample_file)
+    cultural_heritage_chat = spaw_chat(None, samples)
     
     while True:
-        ollama_input, finished = cultural_heritage_chat.render_dialog()
+        ollama_input, finished = cultural_heritage_chat.render()
         if finished:
             break
         ai_message = ollama_process(model_name, ollama_input)
