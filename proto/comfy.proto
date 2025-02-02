@@ -3,15 +3,6 @@ syntax = "proto3";
 package comfy;
 
 
-service Comfy {
-  rpc SetImage(Image) returns (Empty) {}
-  rpc SetMask(Image) returns (Empty) {}
-  rpc SetOptions(Options) returns (Empty) {}
-  rpc Inpaint(Empty) returns (Image) {}
-  rpc UberInpaint(Empty) returns (Image) {}
-  rpc Img2Img(Empty) returns (Image) {}
-  rpc Txt2Img(Empty) returns (Image) {}
-}
 
 enum ImgType {
   NONE = 0;
@@ -61,3 +52,13 @@ message Options {
   InpaintType inpt_flag = 4;
 }
 
+service Comfy {
+  rpc SetImage(Image) returns (Empty) {}
+  rpc SetMask(Image) returns (Empty) {}
+  rpc SetOptions(Options) returns (Empty) {}
+  rpc Inpaint(Empty) returns (Image) {}
+  rpc UberInpaint(Empty) returns (Image) {}
+  rpc Img2Img(Empty) returns (Image) {}
+  rpc Txt2Img(Empty) returns (Image) {}
+  rpc Ipnet(Empty) returns (Image) {}
+}

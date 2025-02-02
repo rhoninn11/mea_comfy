@@ -1,13 +1,15 @@
 
 
+rebuild_docker:
+	cd docker && docker build --no-cache -t rhoninn11/comfy_docker:v3 .
 
-docker_build:
+build_docker:
 	cd docker && docker build -t rhoninn11/comfy_docker:v3 .
 
-docker_run:
+run_docker:
 	cd docker && docker compose up
 
-docker_shell:
+shell_docker:
 	cd docker && docker exec -it comfy_no_0 bash
 
 mea_comfy_models:

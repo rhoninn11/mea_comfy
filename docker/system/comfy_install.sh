@@ -9,7 +9,7 @@ COMFY_MNG_REPO="https://github.com/ltdrdata/ComfyUI-Manager.git"
 COMFY_SCRIPT_VER="v0.5.1"
 COMFY_SCRIPT_REPO="https://github.com/Chaoses-Ib/ComfyScript.git"
 
-
+IPADAPTERS_REPO="https://github.com/cubiq/ComfyUI_IPAdapter_plus.git"
 
 setup_comfy_ui() {
     PROJ_DIR="$PROJ_ROOT"
@@ -43,14 +43,26 @@ setup_comfy_ui() {
         echo "Cloning $NAME..."
         git clone --branch $COMFY_SCRIPT_VER --single-branch $COMFY_SCRIPT_REPO
     fi
+    
+
+    NAME="ComfyUI_IPAdapter_plus"
+    ADAPTER_DIR="$PLUGIN_DIR/$NAME"
+    if [ ! -d "$ADAPTER_DIR" ]; then
+        echo "Cloning $NAME..."
+        git clone --single-branch $IPADAPTERS_REPO
+    fi
+
 
     cd $COMFY_DIR
     pip install -r requirements.txt
     cd $MANAGER_DIR
     pip install -r requirements.txt
+    cd $ADAPTER_DIR
+    pip install -r requirements.txt
     cd $CSCRIPT_DIR
     python -m pip install -e ".[default]"
     pip install --upgrade transformers==4.45.0
+    pip install --upgrade numpy=1.26.4
 
     echo "+++ ComfyUI setup finished"
 

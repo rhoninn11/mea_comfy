@@ -57,6 +57,15 @@ def sequence_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
         _result = stub.Inpaint(pb2.Empty())
         io.imsave(f'{save_dir}/out_img_{i:02}.png', img_proto_2_np(_result))
 
+def single_adapter_run(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
+    save_dir = "fs"
+    opt.img_power = 0.0
+    opt.inpt_flag = pb2.SDXL
+    stub.SetOptions(opt)
+    _result = stub.Ipnet(pb2.Empty())
+    print("first step")
+    io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))   
+
 def single_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     save_dir = "fs"
 
@@ -110,7 +119,8 @@ def start_client():
     stub.SetMask(_mask)
     
     # sequence_gen(_opt, stub)
-    single_gen(_opt, stub)
+    # single_gen(_opt, stub)
+    single_adapter_run(_opt, stub)
 
     tock = time.perf_counter()
 

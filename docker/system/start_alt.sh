@@ -13,5 +13,5 @@ start_ollama() {
 }
 
 
-# start_comfy_ui
-start_ollama
+start_comfy_ui
+# start_ollama
