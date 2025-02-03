@@ -21,10 +21,11 @@ def proto_gen(in_dir, out_dir):
             proto_file,
         ))
 
-IN_DIR="./proto"
-OUT_DIR="./src/proto"
 
-def main():
+def script():
+    IN_DIR="./proto"
+    OUT_DIR="./src/proto"
     proto_gen(IN_DIR, OUT_DIR)
+    print("+++ proto sources regenerated")
 
-main()
+script()

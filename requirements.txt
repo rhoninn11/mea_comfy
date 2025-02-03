@@ -1,0 +1,4 @@
+numpy
+grpcio-tools
+scikit-image
+ollama

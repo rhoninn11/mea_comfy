@@ -6,6 +6,7 @@ services:
     ports:
       - '8188:8188'
       - '11434:11434'
+      - '50051:50051'
     deploy:
       resources:
         reservations:
@@ -18,8 +19,8 @@ services:
       - $OLLAMA/models:/root/.ollama/models
       
       - $MEA/docker/system:/mea/system
-      - $MEA/src:/mea/mea_comfy_wrap/src
-      - $MEA/proto:/mea/mea_comfy_wrap/proto
+      - $MEA/src:/mea/mea_comfy/src
+      - $MEA/proto:/mea/mea_comfy/proto
       - $MEA/assets:/mea/dev_bridge/assets
       - $MEA/other:/mea/dev_bridge/misc
 

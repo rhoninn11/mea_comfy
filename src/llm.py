@@ -99,7 +99,7 @@ def ollama_process(model_name, chat_to_process, v=False):
  
 def pick_model() -> str:
     models: list = ollama.list().models
-    prefered_model: str = "llava-lama3"
+    prefered_model: str = "deepseek-r1:32b"
 
     for model_bucket in models:
         if model_bucket.model == prefered_model:
@@ -127,7 +127,5 @@ def main():
         ollama_input, finished = cultural_heritage_chat.render()
         if finished:
             break
-        ai_message = ollama_process(model_name, ollama_input)
+        ai_message = ollama_process(model_name, ollama_input, v=True)
         cultural_heritage_chat.add_ai_resp(ai_message)
-        print("---")
-        print(ai_message)
