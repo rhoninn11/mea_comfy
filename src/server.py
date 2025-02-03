@@ -8,7 +8,7 @@ from workflows.flux_inpaint_blend import workflow as workflow_inpaint_f
 from workflows.flux_img2img import workflow as workflow_img2img
 from workflows.flux_txt2img import workflow as workflow_tmg2img
 
-from workflows.sdxl_ipadapter import workflow as workflow_ipadapter
+from workflows.sdxl_ipadapter import IpAdapter
 from workflows.sdxl_inpaint_plus_plus import workflow as workflow_inpaint_xl
 
 class ComfyService(pb2_grpc.ComfyServicer):
@@ -17,6 +17,7 @@ class ComfyService(pb2_grpc.ComfyServicer):
         self.img_pt = None
         self.mask_pt = None
         self.options: pb2.Options = pb2.Options(prompts=["flowers on sufrace of the earth"])
+        self.adapterRef = IpAdapter()
 
     def SetImage(self, request: pb2.Image, context):
         print(f"+++ set image")
@@ -30,6 +31,10 @@ class ComfyService(pb2_grpc.ComfyServicer):
     
     def SetOptions(self, request: pb2.Options, context):
         self.options = request
+        return pb2.Empty()
+    
+    def SetCrop(self, request: pb2.Crop, context):
+        self.adapterRef.set_crop(request)
         return pb2.Empty()
     
     def Inpaint(self, request, context) -> pb2.Image:
@@ -49,7 +54,7 @@ class ComfyService(pb2_grpc.ComfyServicer):
         print("+++ ip adapter")
         prompt = self.options.prompts[0]
         img_power = self.options.img_power
-        img_pt = workflow_ipadapter(self.img_pt, self.mask_pt, prompt, img_power)
+        img_pt = self.adapterRef.workflow(self.img_pt, self.mask_pt, prompt, img_power)
         return img_pt_2_proto(img_pt)
         
 
@@ -64,6 +69,7 @@ class ComfyService(pb2_grpc.ComfyServicer):
         prompt = self.options.prompts[0]
         img_pt = workflow_tmg2img(prompt)
         return img_pt_2_proto(img_pt)
+    
     
 
 def _load_credential_from_file(filepath):

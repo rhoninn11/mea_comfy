@@ -7,7 +7,7 @@ start_comfy_ui() {
 }
 
 start_comfy_mea() {
-    COMFY_MEA="/mea/mea_comfy_wrap"
+    COMFY_MEA="/mea/mea_comfy"
     cd $COMFY_MEA
     python main.py -server
 }

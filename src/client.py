@@ -51,11 +51,32 @@ import numpy as np
 def sequence_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     save_dir = "fs/seq"
     ensure_path_exist(save_dir)
+
     for i, _power in enumerate(np.linspace(0,0.25,5).tolist()):
         opt.img_power = _power
         stub.SetOptions(opt)
         _result = stub.Inpaint(pb2.Empty())
         io.imsave(f'{save_dir}/out_img_{i:02}.png', img_proto_2_np(_result))
+
+def sequence_adapter_run(opt: pb2.Options, stub: pb2_grpc.ComfyStub, proto_img: pb2.Image):
+    save_dir = "fs/seq_ada"   
+    ensure_path_exist(save_dir)
+
+    x_offs = [0, 128, 256, 384, 512]
+    y_offs = [0, 128, 256, 384, 512]
+    np_ref_img = img_proto_2_np(proto_img)
+
+    for x_off in x_offs:
+        for y_off in y_offs:
+            stub.SetCrop(pb2.Crop(w=512, h=512, x=x_off, y=y_off))
+            sub_img = np_ref_img[x_off:x_off + 512, y_off:y_off + 512, :]
+            sub_img = sub_img[::4, ::4, :]
+            
+            result = stub.Ipnet(pb2.Empty())
+            np_result = img_proto_2_np(result).copy()
+            np_result[0:128,0:128,:] = sub_img[:,:,:]
+            io.imsave(f'{save_dir}/img_{x_off}_{y_off}.png', np_result)
+ 
 
 def single_adapter_run(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     save_dir = "fs"
@@ -120,7 +141,8 @@ def start_client():
     
     # sequence_gen(_opt, stub)
     # single_gen(_opt, stub)
-    single_adapter_run(_opt, stub)
+    # single_adapter_run(_opt, stub)
+    sequence_adapter_run(_opt, stub, _img)
 
     tock = time.perf_counter()
 
