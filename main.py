@@ -27,8 +27,6 @@ my_args = sys.argv.copy()
 sys.argv = sys.argv[:1]
 # to not interference with comfy
 
-import proto_gen
-
 # setUpComfy()
 sys.path.append("src")
 sys.path.append("src/proto")
