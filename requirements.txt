@@ -1,4 +1,4 @@
 numpy
-grpcio-tools
+grpcio-tools==1.70.0
 scikit-image
 ollama

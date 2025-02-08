@@ -1,7 +1,7 @@
 gitpython
 numpy
 matplotlib
-grpcio-tools
+grpcio-tools==1.70.0
 scikit-image
 opencv-python
 PyQt5

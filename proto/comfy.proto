@@ -2,8 +2,6 @@
 syntax = "proto3";
 package comfy;
 
-
-
 enum ImgType {
   NONE = 0;
   MONO = 1;
@@ -52,18 +50,12 @@ message Options {
   InpaintType inpt_flag = 4;
 }
 
-message Crop {
-  uint32 w = 1;
-  uint32 h = 2;
-  uint32 x = 3;
-  uint32 y = 4;
-}
 
 service Comfy {
   rpc SetImage(Image) returns (Empty) {}
   rpc SetMask(Image) returns (Empty) {}
   rpc SetOptions(Options) returns (Empty) {}
-  rpc SetCrop(Crop) returns (Empty) {}
+  rpc SetCrop(Image) returns (Empty) {}
   rpc Inpaint(Empty) returns (Image) {}
   rpc UberInpaint(Empty) returns (Image) {}
   rpc Img2Img(Empty) returns (Image) {}

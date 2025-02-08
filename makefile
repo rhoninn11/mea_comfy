@@ -15,8 +15,8 @@ shell_docker:
 mea_comfy_models:
 	python other/download.py
 
-python_proto:
-	python proto_gen.py
+gen_proto: 
+	python proto/proto_gen.py
 
 python_llm:
 	python main.py -llm

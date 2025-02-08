@@ -26,7 +26,7 @@ class comfyWorkflow():
         pass
     
 
-    def tripple_prompt(self, text_prompt: str, clip):
+    def prompt_triplet(self, text_prompt: str, clip):
         first_desc = CLIPTextEncode(text_prompt, clip)
         second_desc = CLIPTextEncode("Placeholder: sad woman singing while raining", clip)
         third_desc = CLIPTextEncode("Placeholder: nostalgic photo of apple fruit", clip)

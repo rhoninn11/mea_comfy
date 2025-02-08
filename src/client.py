@@ -1,16 +1,21 @@
 import os
+import time
+import numpy as np
+
 import grpc
+import proto.comfy_pb2 as pb2
+import proto.comfy_pb2_grpc as pb2_grpc
 
 from skimage import io
-from utils_mea import img_np_2_pt
 
+from utils_mea import *
 from utils import proj_asset, file2json2obj, ensure_path_exist
 
-def uno_channel(pt_img):
-    return pt_img[:,:,:, 0:1]
+def uno_channel(img: np.ndarray) -> np.ndarray:
+    return img[:,:, 0:1]
 
-def trio_channel(pt_img):
-    return pt_img[:,:,:, 0:3]
+def trio_channel(img: np.ndarray) -> np.ndarray:
+    return img[:,:, 0:3]
 
 def load_prompt():
     import json
@@ -19,21 +24,14 @@ def load_prompt():
     prompt = json.load(f)["prompt"]
     return prompt
 
-def load_image(name):
+def load_image(name) -> np.ndarray:
     img_file = proj_asset(name)
-    print(img_file)
-    img_np = io.imread(img_file)
-    img_pt = img_np_2_pt(img_np, transpose=False, one_minus_one=False)
-    img_pt = img_pt.unsqueeze(0)
-    return img_pt
+    print("+++ reading img from file: ",img_file)
+    return io.imread(img_file)
 
 def save_img(name: str):
     name.split()
 
-
-import proto.comfy_pb2 as pb2
-import proto.comfy_pb2_grpc as pb2_grpc
-from utils_mea import img_proto_2_pt, img_pt_2_proto, img_proto_2_np
 
 def _load_credential_from_file(filepath):
     real_path = os.path.abspath(filepath)
@@ -45,8 +43,6 @@ SERVER_CERTIFICATE = _load_credential_from_file("assets/credentials/localhost.cr
 SERVER_CERTIFICATE_KEY = _load_credential_from_file("assets/credentials/localhost.key")
 ROOT_CERTIFICATE = _load_credential_from_file("assets/credentials/root.crt")
 
-import time
-import numpy as np
 
 def sequence_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     save_dir = "fs/seq"
@@ -61,20 +57,26 @@ def sequence_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
 def sequence_adapter_run(opt: pb2.Options, stub: pb2_grpc.ComfyStub, proto_img: pb2.Image):
     save_dir = "fs/seq_ada"   
     ensure_path_exist(save_dir)
-
-    x_offs = [0, 128, 256, 384, 512]
-    y_offs = [0, 128, 256, 384, 512]
+    print("+++ Elo", proto_img.info)
     np_ref_img = img_proto_2_np(proto_img)
+    img_size = np_ref_img.shape[0]
+    win_size = int(img_size/2)
+    shift = 200
+
+    x_offs = [256]
+    y_offs = [0, 128, 256, 512]
 
     for x_off in x_offs:
         for y_off in y_offs:
-            stub.SetCrop(pb2.Crop(w=512, h=512, x=x_off, y=y_off))
-            sub_img = np_ref_img[x_off:x_off + 512, y_off:y_off + 512, :]
-            sub_img = sub_img[::4, ::4, :]
-            
+            # print(x_off, y_off, type(x_off), type(win_size), type(img_size))
+            min_img = np_ref_img[y_off:y_off + win_size, x_off:x_off + win_size, :]
+
+            stub.SetCrop(img_np_2_proto(min_img))
             result = stub.Ipnet(pb2.Empty())
             np_result = img_proto_2_np(result).copy()
-            np_result[0:128,0:128,:] = sub_img[:,:,:]
+
+            min_img = min_img[::4, ::4, :]
+            np_result[0:128,0:128,:] = min_img[:,:,:]
             io.imsave(f'{save_dir}/img_{x_off}_{y_off}.png', np_result)
  
 
@@ -104,6 +106,28 @@ def single_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     print("second step")
     io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))
 
+class Timeline():
+    t_bucket: float
+    text: str
+    def __init__(self, text):
+        self.text = text
+
+    def __enter__(self):
+        self.t_bucket = time.perf_counter()
+    
+    def __exit__(self, t, v, trace):
+        elapsed = time.perf_counter() - self.t_bucket
+        print(f"+++ {self.text} took: {elapsed/1000} s")
+        return False
+
+def serdes_pipe(img_proto: pb2.Image, write=False) -> pb2.Image:
+    bin_data = img_proto.SerializeToString()
+    if write:
+        with open("fs/serdesdump", "wb") as bin_file:
+            bin_file.write(bin_data)
+
+    return pb2.Image.FromString(bin_data)
+
 def start_client():
     port = 50051
 
@@ -120,32 +144,30 @@ def start_client():
     channel = grpc.secure_channel(endpoint, credentials, options=channel_options)
     stub = pb2_grpc.ComfyStub(channel)
 
-    img_pt = load_image('img.png')
-    img_pt = trio_channel(img_pt)
-    mask_pt = load_image('mask.png')
-    mask_pt = uno_channel(mask_pt)
+    img_np = trio_channel(load_image('img.png'))
+    mask_np = uno_channel(load_image('mask.png'))
 
     prompt = load_prompt()
-    print(prompt)
+    print("test prompt: ",prompt)
 
-    _opt = pb2.Options(
+    opts = pb2.Options(
         prompts=[prompt],
         img_power=1,
         inpt_flag=pb2.FLUX)
-    _img = img_pt_2_proto(img_pt)
-    _mask = img_pt_2_proto(mask_pt)
-    
-    tick = time.perf_counter()
-    stub.SetImage(_img)
-    stub.SetMask(_mask)
-    
-    # sequence_gen(_opt, stub)
-    # single_gen(_opt, stub)
-    # single_adapter_run(_opt, stub)
-    sequence_adapter_run(_opt, stub, _img)
 
-    tock = time.perf_counter()
+    img_proto = img_np_2_proto(img_np)
+    img_proto = serdes_pipe(img_proto, True)
 
-    print(f"+++ Inpainting + io took {(tock - tick)} s")
+    mask_proto = img_np_2_proto(mask_np)
+
+    with Timeline("simple run") as time_messure:
+        stub.SetImage(img_proto)
+        stub.SetMask(mask_proto)
+        stub.SetOptions(opts)
+        
+        # sequence_gen(_opt, stub)
+        # single_gen(_opt, stub)
+        # single_adapter_run(_opt, stub)
+        sequence_adapter_run(opts, stub, img_proto)
     
 

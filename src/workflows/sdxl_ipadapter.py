@@ -5,12 +5,19 @@ load()
 from comfy_script.runtime.real.nodes import *
 
 from workflows.base import comfyWorkflow
-from proto.comfy_pb2 import Crop
+from proto.comfy_pb2 import *
+
+from src.utils_mea import *
 
 class IpAdapter(comfyWorkflow):
+    def __init__(self):
+        self.img_ref = None
+        self.reload_adapter = True
+        self.cached_adapter = None
 
-    def set_crop(self, c: Crop):
-        self.crop = c    
+    def set_crop(self, ref_img: Image):
+        self.img_ref = img_proto_2_pt(ref_img)
+        self.reload_adapter = True
 
     def load_models(self):
         model, clip, vae = CheckpointLoaderSimple('photopediaXL_45.safetensors')
@@ -18,32 +25,33 @@ class IpAdapter(comfyWorkflow):
         model, ipnet = IPAdapterUnifiedLoader(model, 'STANDARD (medium strength)', None)
         return [model, clip, vae, ipnet]
     
-    def sdxl_ipadapter(self, in_img: torch.Tensor, mask: torch.Tensor, prompt_text: str, img_power: float):
+    def adapter_from_cache(self, model, ipnet):
+        if self.reload_adapter == True:
+            crop_img = PrepImageForClipVision(self.img_ref, 'LANCZOS', 'top', 0)
+            self.cached_adapter = IPAdapter(model, ipnet, crop_img, 0.7, 0, 0.7, 'standard', None)
+            self.reload_adapter = False
+            
+        return self.cached_adapter
+        
+    
+    def sdxl_ipadapter(self, in_img: torch.Tensor, prompt_text: str):
+        steps = 12
+        seed = 3
+
         with Workflow():
-            seed = 3
-            steps = 12
 
             model, clip, vae, ipnet = self.models_from_cache()
-
-            c = self.crop
-            crop_img = ImageCrop(in_img, c.w, c.h, c.x, c.y)
-            crop_img = PrepImageForClipVision(crop_img, 'LANCZOS', 'top', 0)
-
-            print("+++ before ipa")
-            ops_model = IPAdapter(model, ipnet, crop_img, 0.7, 0, 0.7, 'standard', None)
-            print("+++ before rescale")
-            ops_model = RescaleCFG(ops_model, 0.7)
-            print("+++ after rescale")
-            
-            positive, negative = self.tripple_prompt(prompt_text, clip)
-            
+            positive, negative = self.prompt_triplet(prompt_text, clip)
             latent = EmptyLatentImage(1024, 1024, 1)
-            latent = KSamplerAdvanced(ops_model, 'enable', seed, 12, 5, 'euler_ancestral', 'sgm_uniform', positive, negative, latent, 0, steps, 'disable')
-            out_img = VAEDecode(latent, vae)
 
+            ipnet_armed = self.adapter_from_cache(model, ipnet)
+            ipnet_armed = RescaleCFG(ipnet_armed, 0.7)
+            
+            latent = KSamplerAdvanced(ipnet_armed, 'enable', seed, steps, 5, 'euler_ancestral', 'sgm_uniform', positive, negative, latent, 0, steps, 'disable')
+            out_img = VAEDecode(latent, vae)
             return out_img.to(in_img.device)
 
 
     def workflow(self, img: torch.Tensor, mask: torch.Tensor, prompt_text: str, img_power: float = 0.5) -> torch.Tensor:
-        result = self.sdxl_ipadapter(img, mask, prompt_text, img_power)
+        result = self.sdxl_ipadapter(img, prompt_text)
         return result

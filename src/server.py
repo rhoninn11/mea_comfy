@@ -1,6 +1,6 @@
 import os
 
-import proto.comfy_pb2 as pb2
+from proto.comfy_pb2 import *
 import proto.comfy_pb2_grpc as pb2_grpc
 from utils_mea import img_proto_2_pt, img_pt_2_proto, img_proto_2_np
 
@@ -13,52 +13,53 @@ from workflows.sdxl_inpaint_plus_plus import workflow as workflow_inpaint_xl
 
 class ComfyService(pb2_grpc.ComfyServicer):
     def __init__(self):
-        self.for_now = "😇"
         self.img_pt = None
         self.mask_pt = None
-        self.options: pb2.Options = pb2.Options(prompts=["flowers on sufrace of the earth"])
-        self.adapterRef = IpAdapter()
+        self.options: Options = Options(prompts=["flowers on sufrace of the earth"])
+        self.ipnet = IpAdapter()
+        self.reload: bool = True
+        self.img_ref = None
 
-    def SetImage(self, request: pb2.Image, context):
+    def SetImage(self, request: Image, context):
         print(f"+++ set image")
         self.img_pt = img_proto_2_pt(request)
-        return pb2.Empty()
+        return Empty()
     
-    def SetMask(self, request: pb2.Image, context):
+    def SetMask(self, request: Image, context):
         print(f"+++ set mask")
         self.mask_pt = img_proto_2_pt(request)
-        return pb2.Empty()
+        return Empty()
     
-    def SetOptions(self, request: pb2.Options, context):
+    def SetOptions(self, request: Options, context):
         self.options = request
-        return pb2.Empty()
+        return Empty()
     
-    def SetCrop(self, request: pb2.Crop, context):
-        self.adapterRef.set_crop(request)
-        return pb2.Empty()
+    def SetCrop(self, request: Image, context):
+        self.ipnet.set_crop(request)
+        return Empty()
     
-    def Inpaint(self, request, context) -> pb2.Image:
+    def Inpaint(self, request, context) -> Image:
         opt = self.options
         prompt = opt.prompts[0]
         _inpt = opt.inpt_flag
         _imgp = opt.img_power
         img_pt = self.img_pt
-        if _inpt in [pb2.SDXL, pb2.BOTH]:
+        if _inpt in [SDXL, BOTH]:
             img_pt = workflow_inpaint_xl(img_pt, self.mask_pt, prompt, _imgp)
             img_pt = img_pt.to(self.img_pt.device)
-        if _inpt in [pb2.FLUX, pb2.BOTH]:
+        if _inpt in [FLUX, BOTH]:
             img_pt = workflow_inpaint_f(img_pt, self.mask_pt, prompt, _imgp)
         return img_pt_2_proto(img_pt)
 
-    def Ipnet(self, request, context) -> pb2.Image:
+    def Ipnet(self, request, context) -> Image:
         print("+++ ip adapter")
         prompt = self.options.prompts[0]
         img_power = self.options.img_power
-        img_pt = self.adapterRef.workflow(self.img_pt, self.mask_pt, prompt, img_power)
+        img_pt = self.ipnet.workflow(self.img_pt, self.mask_pt, prompt, img_power)
         return img_pt_2_proto(img_pt)
         
 
-    def Img2Img(self, request, context) -> pb2.Image:
+    def Img2Img(self, request, context) -> Image:
         print("+++ img2img")
         prompt = self.options.prompts[0]
         img_power = self.options.img_power
