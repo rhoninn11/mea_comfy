@@ -168,6 +168,7 @@ def start_client():
         # sequence_gen(_opt, stub)
         # single_gen(_opt, stub)
         # single_adapter_run(_opt, stub)
-        sequence_adapter_run(opts, stub, img_proto)
+        # sequence_adapter_run(opts, stub, img_proto)
+        print("do nothing")
     
 
