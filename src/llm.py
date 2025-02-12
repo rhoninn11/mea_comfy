@@ -3,99 +3,65 @@ from typing import Optional, Sequence, List
 import ollama
 
 from enum import Enum
-from pydantic import BaseModel
 
 from ollama import chat
 
 from utils import proj_asset, Proj
-
-class Role(str, Enum):
-    SYSTEM = "system"
-    USER = "user"
-    AI = "assistant"
-
-ROLES = [Role.SYSTEM, Role.USER, Role.AI]
-
-class Message(BaseModel):
-    role: Role
-    content: str
-    images: Optional[Sequence[str]] = None
-
-    class Config:
-        use_enum_values = True
-
-class SimpleChat(BaseModel):
+from proto.ollama_pb2 import *
 
 
+class SimpleChat():
     msg_list: list[Message]
     counter: dict[Role, int] = {}
-    finished: bool = False
     
     def add_ai_resp(self, text: str):
-        ai_msg = Message(
-            role=Role.AI,
-            content=text
-        )
-        self.msg_list.append(ai_msg)
+        llm_msg = Message(role = Role.assistant, tokens=text)
+        self.msg_list.append(llm_msg)
 
     def render(self) -> tuple[list[dict[str, any]], bool]:
-        out_list: list = []
+        ollama_list: list = []
         for msg in self.msg_list:
-            out_list.append(msg.model_dump())
-        finish = self.finished
-        self.finished = True
-        return out_list, finish
+            ollama_msg = {'role': Role.Name(msg.role), 'content': msg.tokens}
+            ollama_list.append(ollama_msg)
+        return ollama_list
 
 
-class ChatFmt:
-    data: str = ""        
+def spaw_chat() -> SimpleChat:
+    proto_list: list[Message] = []
 
-def spaw_chat(chat: ChatFmt, samples: list[str]) -> SimpleChat:
-    msg_list = []
+    proto_list.append(Message(
+        role=Role.system,
+        tokens="As for now moment your role is uncpecified",
+    ))
 
-    sys = Message(
-        role=Role.SYSTEM,
-        content="As for now moment your role is uncpecified",
-    )
-    msg_list.append(sys)
+    proto_list.append(Message(
+        role=Role.user,
+        tokens="Tell me some story from your life in the province",
+    ))
+    sch = SimpleChat()
+    sch.msg_list = proto_list
+    return sch
 
-    # usr = Message(
-    #     role=Role.USER,
-    #     content="I have for you one picture",
-    #     images=[samples[0]]
-    # )
-    # msg_list.append(usr)
-    
-    # usr = Message(
-    #     role=Role.USER,
-    #     content="I and the second one of course",
-    #     images=[samples[1]]
-    # )
-    # msg_list.append(usr)
-
-    usr = Message(
-        role=Role.USER,
-        content="Tell me some story from your life in the province",
-    )
-    msg_list.append(usr)
-    return SimpleChat(msg_list=msg_list)
-
-def ollama_process(model_name, chat_to_process, v=False):
-
-    stream = chat(
+def ollama_run(model_name, chat_to_process):
+    return chat(
         model=model_name,
         messages=chat_to_process,
         stream=True
     )
-
+import time
+def ollama_process(ollama_stream):
     tokens = []
-    for chunk in stream:
+    last = time.perf_counter()
+    every_s = 0.2
+    for chunk in ollama_stream:
         token = chunk["message"]["content"]
-        if v:
-            print(token, end='', flush=True)
         tokens.append(token)
-
-    return "".join(tokens)
+        now = time.perf_counter()
+        delta = now - last
+        if delta > every_s:
+            yield tokens
+            tokens = []
+            last += every_s
  
 def pick_model() -> str:
     models: list = ollama.list().models
@@ -118,14 +84,15 @@ def main():
     samples = [ proj.asset("image_a.png"),
                 proj.asset("image_b.png")]
 
+    cultural_heritage_chat: SimpleChat = spaw_chat()
     model_name = pick_model()
     print(f"+++ starting with model {model_name}")
-
-    cultural_heritage_chat = spaw_chat(None, samples)
     
-    while True:
-        ollama_input, finished = cultural_heritage_chat.render()
-        if finished:
-            break
-        ai_message = ollama_process(model_name, ollama_input, v=True)
-        cultural_heritage_chat.add_ai_resp(ai_message)
+    ollama_input = cultural_heritage_chat.render()
+    ollama_stream = ollama_run(model_name, ollama_input)
+    all_tokens = []
+    for tokens in ollama_process(ollama_stream):
+        all_tokens.extend(tokens)
+        print("".join(tokens))
+
+    cultural_heritage_chat.add_ai_resp("".join(all_tokens))
