@@ -9,7 +9,7 @@ import proto.comfy_pb2_grpc as pb2_grpc
 from skimage import io
 
 from utils_mea import *
-from utils import proj_asset, file2json2obj, ensure_path_exist
+from utils import proj_asset, file2json2obj, ensure_path_exist, Timeline
 
 def uno_channel(img: np.ndarray) -> np.ndarray:
     return img[:,:, 0:1]
@@ -106,19 +106,6 @@ def single_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     print("second step")
     io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))
 
-class Timeline():
-    t_bucket: float
-    text: str
-    def __init__(self, text):
-        self.text = text
-
-    def __enter__(self):
-        self.t_bucket = time.perf_counter()
-    
-    def __exit__(self, t, v, trace):
-        elapsed = time.perf_counter() - self.t_bucket
-        print(f"+++ {self.text} took: {elapsed/1000} s")
-        return False
 
 def serdes_pipe(img_proto: pb2.Image, write=False) -> pb2.Image:
     bin_data = img_proto.SerializeToString()

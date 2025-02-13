@@ -6,7 +6,7 @@ from enum import Enum
 
 from ollama import chat
 
-from utils import proj_asset, Proj
+from utils import proj_asset, Proj, Timeline
 from proto.ollama_pb2 import *
 
 
@@ -65,7 +65,7 @@ def ollama_process(ollama_stream):
  
 def pick_model() -> str:
     models: list = ollama.list().models
-    prefered_model: str = "deepseek-r1:32b"
+    prefered_model: str = "deepseek-r1:70b"
 
     for model_bucket in models:
         if model_bucket.model == prefered_model:
@@ -81,8 +81,8 @@ def pick_model() -> str:
 def main(): 
     proj = Proj("llm")
 
-    samples = [ proj.asset("image_a.png"),
-                proj.asset("image_b.png")]
+    # samples = [ proj.asset("image_a.png"),
+    #             proj.asset("image_b.png")]
 
     cultural_heritage_chat: SimpleChat = spaw_chat()
     model_name = pick_model()
@@ -91,8 +91,15 @@ def main():
     ollama_input = cultural_heritage_chat.render()
     ollama_stream = ollama_run(model_name, ollama_input)
     all_tokens = []
+
+    start = time.perf_counter()
     for tokens in ollama_process(ollama_stream):
+        print("".join(tokens), end="", flush=True)
         all_tokens.extend(tokens)
-        print("".join(tokens))
+    print("")
+
+    end = time.perf_counter()
+    s_elapsed = (end - start)
+    print(f"{len(all_tokens)} tokens, took {s_elapsed} s")
 
     cultural_heritage_chat.add_ai_resp("".join(all_tokens))

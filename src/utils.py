@@ -38,3 +38,23 @@ def file2json2obj(json_file):
         json_content = j_file.read()
         data = json.loads(json_content)
     return data
+
+import time
+class Timeline():
+    then: float
+    start: float
+    now: float
+
+    def __init__(self):
+        pass
+
+    def __enter__(self):
+        self.start = time.perf_counter()
+        self.then = self.start
+
+    def __exit__(self, t, v, trace):
+        self.total_elapse()
+    
+    def total_elapse(self):
+        self.now = time.perf_counter()
+        return (self.now - self.start)/1000
