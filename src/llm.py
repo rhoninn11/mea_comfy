@@ -9,7 +9,6 @@ from ollama import chat
 from utils import proj_asset, Proj, Timeline
 from proto.ollama_pb2 import *
 
-
 class SimpleChat():
     msg_list: list[Message]
     counter: dict[Role, int] = {}
@@ -25,8 +24,16 @@ class SimpleChat():
             ollama_list.append(ollama_msg)
         return ollama_list
 
+def warmup_chat() -> SimpleChat:
+    init = Message(
+        role=Role.user,
+        tokens="Just and only say 'hi', thats all:D",
+    )
+    sch = SimpleChat()
+    sch.msg_list = [init] 
+    return sch
 
-def spaw_chat() -> SimpleChat:
+def main_chat() -> SimpleChat:
     proto_list: list[Message] = []
 
     proto_list.append(Message(
@@ -34,9 +41,12 @@ def spaw_chat() -> SimpleChat:
         tokens="As for now moment your role is uncpecified",
     ))
 
+    with open("src/llm.py", "r") as fd:
+        code = fd.read()
+
     proto_list.append(Message(
         role=Role.user,
-        tokens="Tell me some story from your life in the province",
+        tokens=f"can i ask you to explain this code?\n{code}\n do you know its part of your provess?",
     ))
     sch = SimpleChat()
     sch.msg_list = proto_list
@@ -48,7 +58,9 @@ def ollama_run(model_name, chat_to_process):
         messages=chat_to_process,
         stream=True
     )
+
 import time
+
 def ollama_process(ollama_stream):
     tokens = []
     last = time.perf_counter()
@@ -60,8 +72,9 @@ def ollama_process(ollama_stream):
         delta = now - last
         if delta > every_s:
             yield tokens
+            times = int(delta/every_s)
+            last += every_s * times
             tokens = []
-            last += every_s
  
 def pick_model() -> str:
     models: list = ollama.list().models
@@ -78,28 +91,46 @@ def pick_model() -> str:
     name = models[0].model
     return name
 
-def main(): 
-    proj = Proj("llm")
-
-    # samples = [ proj.asset("image_a.png"),
-    #             proj.asset("image_b.png")]
-
-    cultural_heritage_chat: SimpleChat = spaw_chat()
-    model_name = pick_model()
-    print(f"+++ starting with model {model_name}")
-    
-    ollama_input = cultural_heritage_chat.render()
-    ollama_stream = ollama_run(model_name, ollama_input)
-    all_tokens = []
+def ollama_streaming(ollama_stream):
+    tokens = []
 
     start = time.perf_counter()
-    for tokens in ollama_process(ollama_stream):
-        print("".join(tokens), end="", flush=True)
-        all_tokens.extend(tokens)
+    for chunk in ollama_process(ollama_stream):
+        print("".join(chunk), end="", flush=True)
+        tokens.extend(chunk)
     print("")
 
     end = time.perf_counter()
     s_elapsed = (end - start)
-    print(f"{len(all_tokens)} tokens, took {s_elapsed} s")
+    token_size = len(tokens)
+    speed = token_size/s_elapsed
+    print(f"tokens {token_size}, speed {speed} t/s, time {s_elapsed} s")
+    return tokens
 
-    cultural_heritage_chat.add_ai_resp("".join(all_tokens))
+def chat_with_ollama(model_name, active_chat: SimpleChat) -> SimpleChat:
+    ollama_input = active_chat.render()
+    ollama_stream = ollama_run(model_name, ollama_input)
+    all_tokens = ollama_streaming(ollama_stream)
+    active_chat.add_ai_resp("".join(all_tokens))
+    return active_chat
+
+def main(): 
+    proj = Proj("llm")
+    INIT = True
+
+    # samples = [ proj.asset("image_a.png"),
+    #             proj.asset("image_b.png")]
+
+    model_name = pick_model()
+    if INIT:
+        print(f"+++ starting with model {model_name}")
+        chat_with_ollama(model_name, warmup_chat())
+
+    main_convo = chat_with_ollama(model_name, main_chat())
+    main_convo.msg_list.append(Message(
+        role=Role.user,
+        tokens="In which direction develop this code to create something unsusual with that?"
+    ))
+    chat_with_ollama(model_name, main_convo)
+
+    

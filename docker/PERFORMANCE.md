@@ -1,6 +1,3 @@
-
-
-
 docker flux fp7 20 steps torch 2.1 ~32sec 1.4s/step - docker - RTX 3090
 docker flux fp7 20 steps torch 2.2 ~28sec 1.38s/step - docker - RTX 3090
 docker flux fp7 20 steps torch 2.4 ~28sec 1.38s/step - docker - RTX 3090
