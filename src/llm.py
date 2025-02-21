@@ -18,9 +18,18 @@ class SimpleChat():
         self.msg_list.append(llm_msg)
 
     def render(self) -> tuple[list[dict[str, any]], bool]:
+        proj = Proj("llm")
+        INIT = True
+
+        samples = []
+        samples.append(proj.asset('a.png'))
+        
         ollama_list: list = []
         for msg in self.msg_list:
             ollama_msg = {'role': Role.Name(msg.role), 'content': msg.tokens}
+            if msg.role == Role.user:
+                ollama_msg["images"] = samples
+
             ollama_list.append(ollama_msg)
         return ollama_list
 
@@ -46,7 +55,7 @@ def main_chat() -> SimpleChat:
 
     proto_list.append(Message(
         role=Role.user,
-        tokens=f"can i ask you to explain this code?\n{code}\n do you know its part of your provess?",
+        tokens=f"What you see on that depiction?",
     ))
     sch = SimpleChat()
     sch.msg_list = proto_list
@@ -78,7 +87,7 @@ def ollama_process(ollama_stream):
  
 def pick_model() -> str:
     models: list = ollama.list().models
-    prefered_model: str = "deepseek-r1:70b"
+    prefered_model: str = "minicpm-v:latest"
 
     for model_bucket in models:
         if model_bucket.model == prefered_model:
@@ -129,7 +138,7 @@ def main():
     main_convo = chat_with_ollama(model_name, main_chat())
     main_convo.msg_list.append(Message(
         role=Role.user,
-        tokens="In which direction develop this code to create something unsusual with that?"
+        tokens="What is the gestalt of it, what it come from?"
     ))
     chat_with_ollama(model_name, main_convo)
 
