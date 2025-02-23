@@ -60,11 +60,11 @@ def sequence_adapter_run(opt: pb2.Options, stub: pb2_grpc.ComfyStub, proto_img: 
     print("+++ Elo", proto_img.info)
     np_ref_img = img_proto_2_np(proto_img)
     img_size = np_ref_img.shape[0]
-    win_size = int(img_size/2)
+    win_size = int(img_size/4)
     shift = 200
 
     x_offs = [256]
-    y_offs = [0, 128, 256, 512]
+    y_offs = [0, 128, 256, 512, 768]
 
     for x_off in x_offs:
         for y_off in y_offs:
@@ -75,7 +75,7 @@ def sequence_adapter_run(opt: pb2.Options, stub: pb2_grpc.ComfyStub, proto_img: 
             result = stub.Ipnet(pb2.Empty())
             np_result = img_proto_2_np(result).copy()
 
-            min_img = min_img[::4, ::4, :]
+            min_img = min_img[::2, ::2, :]
             np_result[0:128,0:128,:] = min_img[:,:,:]
             io.imsave(f'{save_dir}/img_{x_off}_{y_off}.png', np_result)
  
@@ -147,7 +147,7 @@ def start_client():
 
     mask_proto = img_np_2_proto(mask_np)
 
-    with Timeline("simple run") as time_messure:
+    with Timeline() as time_messure:
         stub.SetImage(img_proto)
         stub.SetMask(mask_proto)
         stub.SetOptions(opts)
@@ -155,7 +155,7 @@ def start_client():
         # sequence_gen(_opt, stub)
         # single_gen(_opt, stub)
         # single_adapter_run(_opt, stub)
-        # sequence_adapter_run(opts, stub, img_proto)
+        sequence_adapter_run(opts, stub, img_proto)
         print("do nothing")
     
 
