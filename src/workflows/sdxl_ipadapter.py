@@ -9,14 +9,16 @@ from proto.comfy_pb2 import *
 
 from src.utils_mea import *
 
+VERBOSE = True
+from state import *
+
 class IpAdapter(comfyWorkflow):
     def __init__(self):
-        self.img_ref = None
+        self.img_ref: torch.Tensor = None
         self.reload_adapter = True
         self.cached_adapter = None
 
-    def set_crop(self, ref_img: Image):
-        self.img_ref = img_proto_2_pt(ref_img)
+    def refresh_crop(self):
         self.reload_adapter = True
 
     def load_models(self):
@@ -26,15 +28,31 @@ class IpAdapter(comfyWorkflow):
         return [model, clip, vae, ipnet]
     
     def adapter_from_cache(self, model, ipnet):
+        global VERBOSE
+        self.reference_img_load()
         if self.reload_adapter == True:
             crop_img = PrepImageForClipVision(self.img_ref, 'LANCZOS', 'top', 0)
             self.cached_adapter = IPAdapter(model, ipnet, crop_img, 0.7, 0, 0.7, 'standard', None)
             self.reload_adapter = False
+            if VERBOSE:
+                ref_size = self.img_ref.shape
+                crop_size = crop_img.shape
+                print(f"+++ info: ref image size {ref_size}")
+                print(f"+++ info: crop image size {crop_size}")
             
         return self.cached_adapter
+    
+    def reference_img_load(self):
+        image, _ = LoadImage("example.png")
+        prepared = PrepImageForClipVision(image, 'LANCZOS', 'top', 0)
+
+        print(f"+++ info: example image size {image.shape}")
+        print(f"+++ info: prepared image size {prepared.shape}")
+
+
         
     
-    def sdxl_ipadapter(self, in_img: torch.Tensor, prompt_text: str):
+    def sdxl_ipadapter(self, prompt_text: str) -> torch.Tensor:
         steps = 12
         seed = 3
 
@@ -49,9 +67,12 @@ class IpAdapter(comfyWorkflow):
             
             latent = KSamplerAdvanced(ipnet_armed, 'enable', seed, steps, 5, 'euler_ancestral', 'sgm_uniform', positive, negative, latent, 0, steps, 'disable')
             out_img = VAEDecode(latent, vae)
-            return out_img.to(in_img.device)
+            return out_img
 
 
     def workflow(self, img: torch.Tensor, mask: torch.Tensor, prompt_text: str, img_power: float = 0.5) -> torch.Tensor:
-        result = self.sdxl_ipadapter(img, prompt_text)
-        return result
+        result = self.sdxl_ipadapter(prompt_text)
+        return result.to(torch.device("cpu"))
+
+    def workflow_S(self, state: GeneraotorState, img_power: float = 0.5) -> torch.Tensor:
+        return 

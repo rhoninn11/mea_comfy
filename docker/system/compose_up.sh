@@ -6,7 +6,7 @@ start_comfy_ui() {
     python main.py --listen --port 8188
 }
 
-start_comfy_mea() {
+start_mea_comfy() {
     COMFY_MEA="/mea/mea_comfy"
     cd $COMFY_MEA
     python main.py -server
@@ -18,7 +18,6 @@ start_ollama() {
     # on port 11434
 }
 
-
 # start_comfy_ui
-# start_comfy_mea
-start_ollama
+start_mea_comfy
+# start_ollama

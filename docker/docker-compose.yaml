@@ -12,7 +12,7 @@ services:
         reservations:
           devices:
           - driver: nvidia
-            device_ids: ['0', '1']
+            device_ids: ['0']
             capabilities: [gpu]
     volumes:
       # ai models
@@ -24,12 +24,13 @@ services:
       # - $MEA/proto:/mea/mea_comfy/proto
       # - $MEA/assets:/mea/dev_bridge/assets
       # - $MEA/misc:/mea/dev_bridge/misc
-      - $MEA:/mea/mea_comfy
+      # - $MEA:/mea/mea_comfy
+      - ../:/mea/mea_comfy
 
       # for gui comfy ui
       # - $MEA/fs/docker/plug_snap:/mea/comfy_ui/custom_nodes/ComfyUI-Manager/snapshots
       # - $MEA/fs/docker/out:/mea/comfy_ui/output
-      - $MEA/docker/system:/mea/system
+      - ./system:/mea/system
 
-    command: /mea/system/start_alt.sh
-    # command: sleep 1000 
+    command: /mea/system/compose_up.sh
+    # command: sleep 4000 

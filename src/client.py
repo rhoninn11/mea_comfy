@@ -4,6 +4,7 @@ import numpy as np
 
 import grpc
 import proto.comfy_pb2 as pb2
+import proto.comfy_pb2 as comfy
 import proto.comfy_pb2_grpc as pb2_grpc
 
 from skimage import io
@@ -78,6 +79,7 @@ def sequence_adapter_run(opt: pb2.Options, proto_img: pb2.Image):
     ensure_path_exist(save_dir)
     print("+++ Elo", proto_img.info)
     np_ref_img = img_proto_2_np(proto_img)
+    print("input", np_ref_img.shape)
     img_size = np_ref_img.shape[0]
     win_size = int(img_size/4)
     shift = 200
@@ -89,14 +91,18 @@ def sequence_adapter_run(opt: pb2.Options, proto_img: pb2.Image):
         for y_off in y_offs:
             # print(x_off, y_off, type(x_off), type(win_size), type(img_size))
             min_img = np_ref_img[y_off:y_off + win_size, x_off:x_off + win_size, :]
-
             RPC_STUB.SetCrop(img_np_2_proto(min_img))
             result = RPC_STUB.Ipnet(pb2.Empty())
             np_result = img_proto_2_np(result).copy()
 
             min_img = min_img[::2, ::2, :]
+            print("img size",min_img.shape)
+            print("dst shape", np_result.shape)
             np_result[0:128,0:128,:] = min_img[:,:,:]
-            io.imsave(f'{save_dir}/img_{x_off}_{y_off}.png', np_result)
+            file = f'{save_dir}/img_{x_off}_{y_off}.png'
+            print(file)
+            io.imsave(file, np_result)
+            # exit(1)
  
 
 def single_adapter_run(opt: pb2.Options, ):
@@ -108,6 +114,7 @@ def single_adapter_run(opt: pb2.Options, ):
     print("first step")
     io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))   
 
+# using two models workflow for inpaint
 def single_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     save_dir = "fs"
 
@@ -126,7 +133,7 @@ def single_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))
 # -----------------------------------------------------------------------
 
-
+# dump image as proto fule
 def serdes_pipe(img_proto: pb2.Image, write=False) -> pb2.Image:
     bin_data = img_proto.SerializeToString()
     if write:
@@ -136,6 +143,9 @@ def serdes_pipe(img_proto: pb2.Image, write=False) -> pb2.Image:
     return pb2.Image.FromString(bin_data)
 
 def start_client():
+    rpc_client()
+
+def rpc_client():
     global RPC_STUB
     port = 50051
 
@@ -161,16 +171,20 @@ def start_client():
     opts = pb2.Options(
         prompts=[prompt],
         img_power=1,
-        inpt_flag=pb2.FLUX)
+        inpt_flag=pb2.FLUX,
+        seed=2)
 
+
+    print(img_np.shape)
     img_proto = img_np_2_proto(img_np)
+    set_image_data = comfy.SetImageData(slot=comfy.Slot.Slot_A, image=img_proto)
     img_proto = serdes_pipe(img_proto, True)
 
     mask_proto = img_np_2_proto(mask_np)
     
     assert_stub_exist()
     with Timeline() as time_messure:
-        RPC_STUB.SetImage(img_proto)
+        RPC_STUB.SetImage(set_image_data)
         RPC_STUB.SetMask(mask_proto)
         RPC_STUB.SetOptions(opts)
         

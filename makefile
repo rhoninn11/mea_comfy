@@ -20,3 +20,10 @@ gen_proto:
 
 python_llm:
 	python main.py -llm
+
+python_client:
+	python main.py -client
+
+conda_env:
+# meaby shoud assume a starndard name conda env compatible across multiple proj
+	conda activate comfy_ui

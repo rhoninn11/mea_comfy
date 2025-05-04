@@ -5,6 +5,7 @@ docker exec -it comfy_no_0 bash
 docker container rm comfy_no_0
 ollama run llava-llama3
 
+<!-- count lines??? -->
 awk '{print $2}' /proc/net/tcp | cut -d':' -f2 | sort -u | xargs -I{} bash -c 'printf "%d\n" 0x{}'
 
 

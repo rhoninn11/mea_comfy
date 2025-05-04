@@ -1,8 +1,11 @@
 import os
 
+import torch
 from proto.comfy_pb2 import *
+import proto.comfy_pb2 as comfy
 import proto.comfy_pb2_grpc as pb2_grpc
-from utils_mea import img_proto_2_pt, img_pt_2_proto, img_proto_2_np
+from utils_proto import img_np_2_proto, img_proto_2_np
+from utils_mea import img_np_2_pt, img_pt_2_np
 
 from workflows.flux_inpaint_blend import workflow as workflow_inpaint_f
 from workflows.flux_img2img import workflow as workflow_img2img
@@ -10,6 +13,26 @@ from workflows.flux_txt2img import workflow as workflow_tmg2img
 
 from workflows.sdxl_ipadapter import IpAdapter
 from workflows.sdxl_inpaint_plus_plus import workflow as workflow_inpaint_xl
+
+
+def img_proto_2_pt(img_proto: comfy.Image) -> torch.Tensor:
+    img_np = img_proto_2_np(img_proto)
+    img_pt = img_np_2_pt(img_np, transpose=False, one_minus_one=False)
+    return img_pt.unsqueeze(0)
+
+def img_pt_2_proto(img_pt: torch.Tensor) -> comfy.Image:
+    if len(img_pt.shape) > 3:
+        img_pt = img_pt[0]
+
+    img_np = img_pt_2_np(img_pt, transpose=False, one_minus_one=False)
+    img_proto = img_np_2_proto(img_np)
+    return img_proto
+
+import state
+
+# i would like to base this service around limited set of options
+# just 4 slots for image, mask, and prompts, used for all operations in comfy
+# for more exotice workflows meaby i shoud develop other format of passing data :D
 
 class ComfyService(pb2_grpc.ComfyServicer):
     def __init__(self):
@@ -19,23 +42,32 @@ class ComfyService(pb2_grpc.ComfyServicer):
         self.ipnet = IpAdapter()
         self.reload: bool = True
         self.img_ref = None
+        self.imgs: dict[str, torch.Tensor | None] = {}
+        self.gen_state: state.GeneraotorState = state.GeneraotorState()
 
-    def SetImage(self, request: Image, context):
+    def SetImage(self, request: SetImageData, context):
         print(f"+++ set image")
-        self.img_pt = img_proto_2_pt(request)
+        pt_img = img_proto_2_pt(request.image)
+        at_slot = comfy.Slot.keys()[request.slot]
+        self.gen_state.imgs[at_slot] = pt_img
         return Empty()
     
     def SetMask(self, request: Image, context):
         print(f"+++ set mask")
-        self.mask_pt = img_proto_2_pt(request)
+        # hmmm i think it can fail, but for now i do not need to set mask i think
+        np_img = img_proto_2_np(request)
+        self.mask_pt = img_np_2_pt(np_img)
         return Empty()
     
     def SetOptions(self, request: Options, context):
         self.options = request
+        for key, prompt in zip(comfy.Slot.keys(), self.options.prompts):
+            self.gen_state.prompts[key] = prompt
         return Empty()
     
     def SetCrop(self, request: Image, context):
-        self.ipnet.set_crop(request)
+        self.ipnet.img_ref = img_proto_2_pt(request)
+        self.ipnet.refresh_crop()
         return Empty()
     
     def Inpaint(self, request, context) -> Image:
@@ -43,7 +75,7 @@ class ComfyService(pb2_grpc.ComfyServicer):
         prompt = opt.prompts[0]
         _inpt = opt.inpt_flag
         _imgp = opt.img_power
-        img_pt = self.img_pt
+        img_pt = self.gen_state.imgs[comfy.Slot.Slot_A]
         if _inpt in [SDXL, BOTH]:
             img_pt = workflow_inpaint_xl(img_pt, self.mask_pt, prompt, _imgp)
             img_pt = img_pt.to(self.img_pt.device)
@@ -70,6 +102,9 @@ class ComfyService(pb2_grpc.ComfyServicer):
         prompt = self.options.prompts[0]
         img_pt = workflow_tmg2img(prompt)
         return img_pt_2_proto(img_pt)
+    
+    def Reboot(self, request, context) -> comfy.Empty:
+        return comfy.Empty()
     
     
 

@@ -11,6 +11,8 @@ RUN source /etc/mea_env && ./scripts/comfy_install.sh
 RUN source /etc/mea_env && ./scripts/ollama_install.sh
 # propably also need added to mea_eni 
 RUN source /etc/mea_env && ./scripts/mea_install.sh
+# do jakiego standardu się przygotować?
+# ja bym chciał mieć to jakoś warstwowo, ale za razem wartościowo, zrobione
 
 RUN cat /etc/mea_env
 
