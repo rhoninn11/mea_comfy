@@ -1,6 +1,6 @@
 
 import numpy as np
-import proto.comfy_pb2 as pb2
+import mea_gen_d.comfy_pb2 as pb2
 
 def img_proto_2_np(img_proto: pb2.Image) -> np.ndarray:
     img_np = np.frombuffer(img_proto.pixels, dtype=np.uint8)

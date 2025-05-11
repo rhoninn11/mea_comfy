@@ -18,7 +18,7 @@ sys.argv = sys.argv[:1]
 
 # setUpComfy()
 sys.path.append("src")
-sys.path.append("src/proto")
+sys.path.append("src/mea_gen_d")
 
 sys.argv = my_args
 import argparse

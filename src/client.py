@@ -3,9 +3,9 @@ import time
 import numpy as np
 
 import grpc
-import proto.comfy_pb2 as pb2
-import proto.comfy_pb2 as comfy
-import proto.comfy_pb2_grpc as pb2_grpc
+import mea_gen_d.comfy_pb2 as pb2
+import mea_gen_d.comfy_pb2 as comfy
+import mea_gen_d.comfy_pb2_grpc as pb2_grpc
 
 from skimage import io
 

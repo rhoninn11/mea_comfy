@@ -1,5 +1,5 @@
 import torch
-import proto.comfy_pb2 as comfy
+import mea_gen_d.comfy_pb2 as comfy
 
 class GeneraotorState():
     def __init__(self):

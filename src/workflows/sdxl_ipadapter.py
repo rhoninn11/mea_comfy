@@ -5,7 +5,7 @@ load()
 from comfy_script.runtime.real.nodes import *
 
 from workflows.base import comfyWorkflow
-from proto.comfy_pb2 import *
+from mea_gen_d.comfy_pb2 import *
 
 from src.utils_mea import *
 

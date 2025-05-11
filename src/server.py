@@ -1,9 +1,9 @@
 import os
 
 import torch
-from proto.comfy_pb2 import *
-import proto.comfy_pb2 as comfy
-import proto.comfy_pb2_grpc as pb2_grpc
+from mea_gen_d.comfy_pb2 import *
+import mea_gen_d.comfy_pb2 as comfy
+import mea_gen_d.comfy_pb2_grpc as pb2_grpc
 from utils_proto import img_np_2_proto, img_proto_2_np
 from utils_mea import img_np_2_pt, img_pt_2_np
 

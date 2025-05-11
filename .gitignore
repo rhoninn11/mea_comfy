@@ -5,3 +5,4 @@ __pycache__
 tmp
 src/proto
 comfyui*.log
+src/*_gen_d

@@ -15,13 +15,13 @@ shell_docker:
 mea_comfy_models:
 	python other/download.py
 
-gen_proto: 
+protogen: 
 	python proto/proto_gen.py
 
 python_llm:
 	python main.py -llm
 
-python_client:
+client_py:
 	python main.py -client
 
 conda_env:
