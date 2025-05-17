@@ -4,6 +4,7 @@ COPY system /scripts
 
 RUN touch /etc/mea_env
 RUN mkdir /mea
+# should be writen to /etc/profile.d/...
 RUN echo export PROJ_ROOT="/mea" >> /etc/mea_env
 RUN echo export COMFY="/mea/comfy_ui" >> /etc/mea_env
 

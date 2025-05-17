@@ -137,7 +137,18 @@
             "link": "https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8/resolve/main/text_encoders/t5xxl_fp16.safetensors",
             "file": "t5xxl_fp16.safetensors",
             "dst": "clip"
+        },
+        {
+            "name": "brushnet_rand",
+            "link": "https://huggingface.co/grzelakadam/brushnet_xl_models/resolve/main/random_mask_brushnet_ckpt_sdxl_v0.safetensors",
+            "file": "random_mask_brushnet.safetensors",
+            "dst": "inpaint"
+        },
+        {
+            "name": "brushnet_segm",
+            "link": "https://huggingface.co/grzelakadam/brushnet_xl_models/resolve/main/segmentation_mask_brushnet_ckpt_sdxl_v0.safetensors",
+            "file": "segmentation_mask_brushnet.safetensors",
+            "dst": "inpaint"
         }
-
     ]
 }

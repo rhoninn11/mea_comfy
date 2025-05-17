@@ -12,8 +12,8 @@ run_docker:
 shell_docker:
 	cd docker && docker exec -it comfy_no_0 bash
 
-mea_comfy_models:
-	python other/download.py
+models:
+	python misc/download.py
 
 protogen: 
 	python proto/proto_gen.py

@@ -18,6 +18,6 @@ start_ollama() {
     # on port 11434
 }
 
-# start_comfy_ui
-start_mea_comfy
+start_comfy_ui
+# start_mea_comfy
 # start_ollama

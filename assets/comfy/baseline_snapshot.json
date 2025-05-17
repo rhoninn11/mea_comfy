@@ -8,6 +8,10 @@
         "https://github.com/pythongosssss/ComfyUI-Custom-Scripts": {
             "hash": "626e001a20c4a6ad8f987153538d7ff750cb2850",
             "disabled": false
+        },
+         "https://github.com/nullquant/ComfyUI-BrushNet": {
+            "hash": "e237b6e64f50fc07143d3271be316933e1abecaa",
+            "disabled": false
         }
     },
     "file_custom_nodes": [
