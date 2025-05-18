@@ -114,8 +114,9 @@ def single_adapter_run(opt: pb2.Options, ):
     print("first step")
     io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))   
 
+
 # using two models workflow for inpaint
-def single_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
+def single_inpaint(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     save_dir = "fs"
 
     opt.img_power = 0.0
@@ -124,14 +125,15 @@ def single_gen(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     _result = stub.Inpaint(pb2.Empty())
     print("first step")
 
-    opt.img_power = 0.35
-    opt.inpt_flag = pb2.FLUX
-    stub.SetOptions(opt)
-    stub.SetImage(_result)
-    _result = stub.Inpaint(pb2.Empty())
-    print("second step")
+    # opt.img_power = 0.35
+    # opt.inpt_flag = pb2.FLUX
+    # stub.SetOptions(opt)
+    # stub.SetImage(_result)
+    # _result = stub.Inpaint(pb2.Empty())
+    # print("second step")
     io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))
 # -----------------------------------------------------------------------
+
 
 # dump image as proto fule
 def serdes_pipe(img_proto: pb2.Image, write=False) -> pb2.Image:
@@ -175,12 +177,15 @@ def rpc_client():
         seed=2)
 
 
+    # RPC_STUB.Reboot(pb2.Empty())
     print(img_np.shape)
     img_proto = img_np_2_proto(img_np)
     set_image_data = comfy.SetImageData(slot=comfy.Slot.Slot_A, image=img_proto)
     img_proto = serdes_pipe(img_proto, True)
 
     mask_proto = img_np_2_proto(mask_np)
+    RPC_STUB.SetMask(mask_proto)
+
     
     assert_stub_exist()
     with Timeline() as time_messure:
@@ -192,7 +197,8 @@ def rpc_client():
         # sequence_gen(_opt)
         # single_gen(_opt)
         # single_adapter_run(_opt)
-        sequence_adapter_run(opts, img_proto)
+        # sequence_adapter_run(opts, img_proto)
+        single_inpaint(opts, RPC_STUB)
         print("do nothing")
     
 

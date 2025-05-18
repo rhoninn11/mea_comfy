@@ -12,7 +12,7 @@ from workflows.flux_img2img import workflow as workflow_img2img
 from workflows.flux_txt2img import workflow as workflow_tmg2img
 
 from workflows.sdxl_ipadapter import IpAdapter
-from workflows.sdxl_inpaint_plus_plus import workflow as workflow_inpaint_xl
+from workflows.sdxl_inpaint_plus_plus import InpaintWorkflow
 
 
 def img_proto_2_pt(img_proto: comfy.Image) -> torch.Tensor:
@@ -40,6 +40,7 @@ class ComfyService(pb2_grpc.ComfyServicer):
         self.mask_pt = None
         self.options: Options = Options(prompts=["flowers on sufrace of the earth"])
         self.ipnet = IpAdapter()
+        self.inpaint = InpaintWorkflow()
         self.reload: bool = True
         self.img_ref = None
         self.imgs: dict[str, torch.Tensor | None] = {}
@@ -55,8 +56,12 @@ class ComfyService(pb2_grpc.ComfyServicer):
     def SetMask(self, request: Image, context):
         print(f"+++ set mask")
         # hmmm i think it can fail, but for now i do not need to set mask i think
-        np_img = img_proto_2_np(request)
-        self.mask_pt = img_np_2_pt(np_img)
+        # np_img = img_proto_2_np(request)
+        # self.mask_pt = img_np_2_pt(np_img)
+
+        self.mask_pt = img_proto_2_pt(request)
+        
+        print(f"+++ mash shape {self.mask_pt.shape}")
         return Empty()
     
     def SetOptions(self, request: Options, context):
@@ -75,10 +80,11 @@ class ComfyService(pb2_grpc.ComfyServicer):
         prompt = opt.prompts[0]
         _inpt = opt.inpt_flag
         _imgp = opt.img_power
-        img_pt = self.gen_state.imgs[comfy.Slot.Slot_A]
+
+        at_slot = comfy.Slot.keys()[comfy.Slot.Slot_A]
+        img_pt = self.gen_state.imgs[at_slot]
         if _inpt in [SDXL, BOTH]:
-            img_pt = workflow_inpaint_xl(img_pt, self.mask_pt, prompt, _imgp)
-            img_pt = img_pt.to(self.img_pt.device)
+            img_pt = self.inpaint.workflow(img_pt, self.mask_pt, prompt, _imgp)
         if _inpt in [FLUX, BOTH]:
             img_pt = workflow_inpaint_f(img_pt, self.mask_pt, prompt, _imgp)
         return img_pt_2_proto(img_pt)
@@ -104,6 +110,7 @@ class ComfyService(pb2_grpc.ComfyServicer):
         return img_pt_2_proto(img_pt)
     
     def Reboot(self, request, context) -> comfy.Empty:
+        print("+++ reboot hit, but how to close it properly")
         return comfy.Empty()
     
     
