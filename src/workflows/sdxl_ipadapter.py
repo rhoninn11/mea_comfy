@@ -1,18 +1,16 @@
-import torch
-
 from comfy_script.runtime.real import *
 load()
 from comfy_script.runtime.real.nodes import *
+from workflows.base import ComfyWorkflow
 
-from workflows.base import comfyWorkflow
+import torch
 from mea_gen_d.comfy_pb2 import *
-
 from src.utils_mea import *
 
 VERBOSE = True
 from state import *
 
-class IpAdapter(comfyWorkflow):
+class IpAdapter(ComfyWorkflow):
     def __init__(self):
         self.img_ref: torch.Tensor = None
         self.reload_adapter = True
@@ -59,7 +57,7 @@ class IpAdapter(comfyWorkflow):
         with Workflow():
 
             model, clip, vae, ipnet = self.models_from_cache()
-            positive, negative = self.prompt_triplet(prompt_text, clip)
+            positive, negative = self.chained_prompts(prompt_text, clip)
             latent = EmptyLatentImage(1024, 1024, 1)
 
             ipnet_armed = self.adapter_from_cache(model, ipnet)
@@ -74,5 +72,5 @@ class IpAdapter(comfyWorkflow):
         result = self.sdxl_ipadapter(prompt_text)
         return result.to(torch.device("cpu"))
 
-    def workflow_S(self, state: GeneraotorState, img_power: float = 0.5) -> torch.Tensor:
+    def workflow_S(self, state: ServState, img_power: float = 0.5) -> torch.Tensor:
         return 

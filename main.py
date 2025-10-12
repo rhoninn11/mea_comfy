@@ -37,7 +37,7 @@ def main():
     parser.add_argument("-editor", action="store_true", help="start simple Qt inpaint editor")
     parser.add_argument("-llm", action="store_true", help="start ollama tinkering script")
     parser.add_argument("-wss", action="store_true", help="start websocket server")
-    parser.add_argument("-wsc", action="store_true", help="start websocket client")
+    parser.add_argument("-wsc",  action="store_true", help="start websocket client")
 
     args = parser.parse_args()
     if args.demo:

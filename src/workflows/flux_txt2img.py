@@ -1,10 +1,5 @@
 import torch
 import numpy as np
-
-from comfy_script.runtime.real import *
-load()
-from comfy_script.runtime.real.nodes import *
-
 from skimage import io
 
 from src.utils_mea import img_pt_2_np

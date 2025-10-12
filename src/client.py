@@ -4,7 +4,7 @@ import numpy as np
 
 import grpc
 import mea_gen_d.comfy_pb2 as pb2
-import mea_gen_d.comfy_pb2 as comfy
+import mea_gen_d.comfy_pb2 as pb2
 import mea_gen_d.comfy_pb2_grpc as pb2_grpc
 
 from skimage import io
@@ -25,12 +25,27 @@ def trio_channel(img: np.ndarray) -> np.ndarray:
     return img[:,:, 0:3]
 # ------------------------
 
-def load_prompt():
+def populate_prompts(stub: pb2_grpc.ComfyStub) -> list[pb2.Slot]:
     import json
-    prompt_file = proj_asset("prompt.json")
-    f = open(prompt_file, "r")
-    prompt = json.load(f)["prompt"]
-    return prompt
+    with open(proj_asset("prompt.json"), "r") as f:
+        file_data = json.load(f)
+
+        slots: list[str] = file_data["usage"]
+        prompts: list[pb2.SlotedPrompt] = []
+        chain: list[pb2.Slot] = []
+        for slot in slots:
+            assert(slot in pb2.Slot.keys())
+            assert(slot not in chain)
+            chain.append(slot)
+            prompts.append(pb2.SlotedPrompt(
+                slot=slot,
+                prompt=file_data[f"prompt_{slot}"],
+            ))
+
+        for prompt in prompts:
+            stub.SetPrompt(prompt)
+        
+        return chain
 
 def load_image(name) -> np.ndarray:
     img_file = proj_asset(name)
@@ -134,6 +149,10 @@ def single_inpaint(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
     io.imsave(f'{save_dir}/out_img_sgl.png', img_proto_2_np(_result))
 # -----------------------------------------------------------------------
 
+def single_img(opt: pb2.Options, stub: pb2_grpc.ComfyStub):
+    stub.SetOptions(opt)
+    _result = stub.Txt2Img(pb2.Empty())
+    io.imsave(f'fs/gen_img.png', img_proto_2_np(_result))
 
 # dump image as proto fule
 def serdes_pipe(img_proto: pb2.Image, write=False) -> pb2.Image:
@@ -161,26 +180,25 @@ def rpc_client():
     credentials = grpc.ssl_channel_credentials(ROOT_CERTIFICATE)
     channel_options = [('grpc.ssl_target_name_override', 'localhost')] # tmp workaround
     
-    channel = grpc.secure_channel(endpoint, credentials, options=channel_options)
+    # channel = grpc.secure_channel(endpoint, credentials, options=channel_options)
+    channel = grpc.insecure_channel(endpoint)
     RPC_STUB= pb2_grpc.ComfyStub(channel)
 
+    slot_usage = populate_prompts(RPC_STUB)
     img_np = trio_channel(load_image('img.png'))
     mask_np = uno_channel(load_image('mask.png'))
 
-    prompt = load_prompt()
-    print("test prompt: ",prompt)
-
     opts = pb2.Options(
-        prompts=[prompt],
+        seed=5,
         img_power=1,
-        inpt_flag=pb2.FLUX,
-        seed=2)
-
+        model_flag=pb2.SDXL,
+        prompt_chain=slot_usage
+    )
 
     # RPC_STUB.Reboot(pb2.Empty())
     print(img_np.shape)
     img_proto = img_np_2_proto(img_np)
-    set_image_data = comfy.SetImageData(slot=comfy.Slot.Slot_A, image=img_proto)
+    set_image_data = pb2.SlotedImage(slot=pb2.Slot.a, image=img_proto)
     img_proto = serdes_pipe(img_proto, True)
 
     mask_proto = img_np_2_proto(mask_np)
@@ -188,6 +206,7 @@ def rpc_client():
 
     
     assert_stub_exist()
+    opts.seed = 0
     with Timeline() as time_messure:
         RPC_STUB.SetImage(set_image_data)
         RPC_STUB.SetMask(mask_proto)
@@ -198,7 +217,8 @@ def rpc_client():
         # single_gen(_opt)
         # single_adapter_run(_opt)
         # sequence_adapter_run(opts, img_proto)
-        single_inpaint(opts, RPC_STUB)
+        # single_inpaint(opts, RPC_STUB)
+        single_img(opts, RPC_STUB)
         print("do nothing")
     
 

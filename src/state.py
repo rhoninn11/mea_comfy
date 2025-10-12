@@ -1,15 +1,16 @@
 import torch
-import mea_gen_d.comfy_pb2 as comfy
+import mea_gen_d.comfy_pb2 as pb2
 
-class GeneraotorState():
+class ServState():
     def __init__(self):
-        self.imgs: dict[str, torch.Tensor | None] = {}
-        self.masks: dict[str, torch.Tensor | None] = {}
-        self.prompts: dict[str, str] = {}
-        slot_keys = comfy.Slot.keys()
+        self.imgs: dict[pb2.Slot, torch.Tensor | None] = {}
+        self.masks: dict[pb2.Slot, torch.Tensor | None] = {}
+        self.prompts: dict[pb2.Slot, str] = {}
+        slot_keys = pb2.Slot.keys()
 
         for key in slot_keys:
-            self.imgs[key] = None
-            self.masks[key] = None
-            self.prompts[key] = ""
+            val = pb2.Slot.Value(key)
+            self.imgs[val] = None
+            self.masks[val] = None
+            self.prompts[val] = ""
         

@@ -1,5 +1,5 @@
 numpy
 grpcio-tools==1.70.0
 scikit-image
-ollama
-peft==0.14.0
+# ollama
+# peft==0.14.0

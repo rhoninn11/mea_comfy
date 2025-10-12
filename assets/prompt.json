@@ -1,3 +1,6 @@
 {
-    "prompt": "sock of humble man, a bit dirty and ripped but still he is very nobe dude. I you would think a bit you would come to conclusion he could be even a king, red ornaments give its a bit more elegancy you could imagine"
+    "prompt_a": "sock of humble man, a bit dirty and ripped but still he is very nobe dude. I you would think a bit you would come to conclusion he could be even a king, red ornaments give its a bit more elegancy you could imagine",
+    "prompt_b": "A gerdener tries now clothes for carnaval, he choosed very elegant costume to put on",
+    "prompt_c": "An ordinary mans who took a moment of rest and that gives him a philosopher look",
+    "usage": ["a", "b", "c"]
 }

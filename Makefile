@@ -1,16 +1,19 @@
 
 
-rebuild_docker:
-	cd docker && docker build --no-cache -t rhoninn11/comfy_docker:v3 .
+up:
+	@echo "+++ go to ./docker/Makefile"
+down:
+	@echo "+++ go to ./docker/Makefile"
+build:
+	@echo "+++ go to ./docker/Makefile"
+shell:
+	@echo "+++ go to ./docker/Makefile"
 
-build_docker:
-	cd docker && docker build -t rhoninn11/comfy_docker:v3 .
 
-run_docker:
-	cd docker && docker compose up
 
-shell_docker:
-	cd docker && docker exec -it comfy_no_0 bash
+
+install:
+	pip install -r requirements.txt
 
 models:
 	python misc/download.py
@@ -21,9 +24,18 @@ protogen:
 python_llm:
 	python main.py -llm
 
-client_py:
+mea_client:
 	python main.py -client
 
+mea_server:
+	python main.py -server
+
+mea_server_docker:
+	cd docker && docker exec -it comfy_no_0 bash --login -c "start_mea_comfy"
 conda_env:
 # meaby shoud assume a starndard name conda env compatible across multiple proj
 	conda activate comfy_ui
+
+sleep:
+	sleep 1800
+

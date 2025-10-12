@@ -7,17 +7,13 @@ start_comfy_ui() {
 }
 
 start_mea_comfy() {
-    COMFY_MEA="/mea/mea_comfy"
-    cd $COMFY_MEA
-    python main.py -server
+    echo "+++ Starting mea_comfy from compose_up"
+    echo "+++ some edits"
+    cd $MEA_COMFY_DIR
+    make mea_server
 }
 
 start_ollama() {    
     export OLLAMA_HOST="0.0.0.0:11434"
     ollama serve
-    # on port 11434
 }
-
-# start_comfy_ui
-start_mea_comfy
-# start_ollama
