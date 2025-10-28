@@ -62,11 +62,15 @@ install_comfy() {
 
     cd $ADAPTER_DIR
     python cm_cli.py install ComfyUI_essentials
+    python cm_cli.py install ComfyUI-Custom-Scripts
     # python cm_cli.py install ComfyUI_Brushnet
     #       trzeba będzie mu cofnąć commita
     # python cm_cli.py install comfyui_controlnet_aux
 
     echo "+++ ComfyUI setup finished"
+    pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/cu126
+    pip install einops
+    pip install torchsde
     # pip install torchvision
     # pip install einops
     # pip install torchsde

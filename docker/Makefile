@@ -2,14 +2,17 @@
 
 
 build:
-# 	docker build -t mea_comfy_docker .
-	docker build --progress=plain -t mea_comfy_docker .
-# 	docker build --no-cache mea_comfy_docker .
+	docker build -t img_mea_comfy .
+# 	docker build --progress=plain -t img_mea_comfy .
+# 	docker build --no-cache img_mea_comfy_docker .
 # 	cd docker && docker compose up
 # 	cd docker && docker exec -it comfy_no_0 bash --login
 
 up:
-	docker compose up
+	docker compose -p mea_comfy_compose up
+
+down:
+	docker compose -p mea_comfy_compose down
 
 shell:
-	docker exec -it comfy_no_0 "/bin/bash" "-l"
+	docker exec -it c_mea_comfy "/bin/bash" "-l"
