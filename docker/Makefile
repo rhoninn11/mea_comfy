@@ -9,7 +9,7 @@ build:
 # 	cd docker && docker exec -it comfy_no_0 bash --login
 
 up:
-	docker compose -p mea_comfy_compose up
+	docker compose -p mea_comfy_compose -f compose.devel.yaml up
 
 down:
 	docker compose -p mea_comfy_compose down

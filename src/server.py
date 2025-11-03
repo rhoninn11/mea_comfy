@@ -35,7 +35,7 @@ import state
 # i would like to base this service around limited set of options
 # just 4 slots for image, mask, and prompts, used for all operations in comfy
 # for more exotice workflows meaby i shoud develop other format of passing data :D
-
+from google.protobuf import text_format
 class ComfyService(pb2_grpc.ComfyServicer):
     def __init__(self):
         self.img_pt = None
@@ -83,6 +83,7 @@ class ComfyService(pb2_grpc.ComfyServicer):
     def SetOptions(self, request: Options, context):
         self.options = request
         print("+++ options was set")
+        # print(text_format.MessageToString(self.options), "XD")
         return Empty()
     
     def SetCrop(self, request: Image, context):

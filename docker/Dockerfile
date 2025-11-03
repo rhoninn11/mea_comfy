@@ -27,9 +27,9 @@ RUN source /mea/system/install.comfy.sh \
 # RUN source /etc/profile.d/mea.sh && source /mea/system/install.ollama.sh \
 #     && install_ollama
 
-# COPY ./system/install.mea_comfy.sh /mea/system/install.mea_comfy.sh
-# RUN source /etc/profile.d/mea.sh && source /mea/system/install.mea_comfy.sh \
-#     && install_mea_comfy
+COPY ./system/install.mea_comfy.sh /mea/system/install.mea_comfy.sh
+RUN source /etc/profile.d/mea.sh && source /mea/system/install.mea_comfy.sh \
+    && install_mea_comfy
 
 COPY system /scripts
 RUN cat /scripts/cmds.sh >> /etc/profile.d/cmds.sh
