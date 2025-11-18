@@ -1,7 +1,7 @@
 services:
   comfy_ui:
     container_name: c_mea_comfy
-    image: mea_comfy_docker
+    image: img_mea_comfy
     # By default Part-DB will be running under Port 8080, you can change it here
     ports:
       - '8188:8188'

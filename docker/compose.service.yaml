@@ -1,7 +1,7 @@
 services:
   comfy_ui:
     container_name: c_mea_comfy
-    image: mea_comfy_docker
+    image: img_mea_comfy
     # By default Part-DB will be running under Port 8080, you can change it here
     ports:
       - '8188:8188'
@@ -33,4 +33,6 @@ services:
       - ./system:/mea/system
 
     # command: /mea/system/cmds.sh
-    command: sleep 10000
+    working_dir: /mea/mea_comfy
+    command: /bin/bash -lc "exec make mea_server"
+ 

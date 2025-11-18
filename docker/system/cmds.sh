@@ -2,14 +2,14 @@
 start_comfy_ui() {
     echo "Starting ComfyUI..."
     COMFY_UI_DIR="/mea/comfy_ui"
-    cd $COMFY_UI_DIR
+    cd $DIR_COMFY_UI_DIR
     python main.py --listen --port 8188
 }
 
 start_mea_comfy() {
     echo "+++ Starting mea_comfy from compose_up"
     echo "+++ some edits"
-    cd $MEA_COMFY_DIR
+    cd $DIR_MEA_COMFY
     make mea_server
 }
 

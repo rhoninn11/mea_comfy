@@ -15,17 +15,20 @@ RUN echo export PROJ_DIR="/mea" >> /etc/profile.d/mea.sh
 RUN echo export DIR_COMFY_UI="/mea/comfy_ui" >> /etc/profile.d/mea.sh
 RUN echo export DIR_MEA_COMFY="/mea/mea_comfy" >> /etc/profile.d/mea.sh
 
-SHELL ["/bin/bash", "-l", "-c"]
+SHELL ["/bin/bash", "-lc"]
 COPY ./system/python.sh /mea/system/python.sh
 RUN source /mea/system/python.sh \
     && spawn_venv
+RUN source /mea/system/python.sh \
+    && pip_install_heavy && pip_install_heavy
+
 COPY ./system/install.comfy.sh /mea/system/install.comfy.sh
 RUN source /mea/system/install.comfy.sh \
     && install_comfy
 
-# COPY ./system/install.ollama.sh /mea/system/install.ollama.sh
-# RUN source /etc/profile.d/mea.sh && source /mea/system/install.ollama.sh \
-#     && install_ollama
+# # COPY ./system/install.ollama.sh /mea/system/install.ollama.sh
+# # RUN source /etc/profile.d/mea.sh && source /mea/system/install.ollama.sh \
+# #     && install_ollama
 
 COPY ./system/install.mea_comfy.sh /mea/system/install.mea_comfy.sh
 RUN source /etc/profile.d/mea.sh && source /mea/system/install.mea_comfy.sh \
