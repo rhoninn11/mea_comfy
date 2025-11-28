@@ -30,6 +30,9 @@ mea_client:
 mea_server:
 	python main.py -server
 
+serv:
+	@cd docker && make up_service
+
 mea_server_docker:
 	cd docker && docker exec -it comfy_no_0 bash --login -c "start_mea_comfy"
 conda_env:
