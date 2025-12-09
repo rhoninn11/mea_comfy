@@ -4,7 +4,8 @@ import os
 import sys
 
 def setUpComfy():
-    value = os.getenv('COMFY')
+    value = os.getenv('DIR_COMFY_UI')
+    print(f"+++ comfy set to {value}")
     if value is not None:
         sys.path.append(value)
     else:
@@ -16,7 +17,7 @@ my_args = sys.argv.copy()
 sys.argv = sys.argv[:1]
 # to not interference with comfy
 
-# setUpComfy()
+setUpComfy()
 sys.path.append("src")
 sys.path.append("src/mea_gen_d")
 
@@ -62,4 +63,5 @@ def main():
     else:
         parser.print_help()
 
+# print("halooo")
 main()

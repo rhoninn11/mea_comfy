@@ -1,14 +1,15 @@
 
 start_comfy_ui() {
-    echo "Starting ComfyUI..."
-    COMFY_UI_DIR="/mea/comfy_ui"
-    cd $DIR_COMFY_UI_DIR
-    python main.py --listen --port 8188
+    cd $DIR_COMFY_UI
+    pip install -r requirements.txt
+    pip install dynaconf
+    python main.py --listen --port 8189
 }
 
 start_mea_comfy() {
-    echo "+++ Starting mea_comfy from compose_up"
-    echo "+++ some edits"
+    cd $DIR_COMFY_UI
+    pip install -r requirements.txt
+    pip install dynaconf
     cd $DIR_MEA_COMFY
     make mea_server
 }

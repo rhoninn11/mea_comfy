@@ -1,4 +1,5 @@
 {
     "to_spawn": [ "flux_schenll", "flux_dev"],
-    "xl_pack": ["xl_vanila", "xl_lora_12_step", "xl_lora_noffset", "clip_base", "ipa_xl", "brushnet_rand", "brushnet_segm", "ipa_xl_plus_face"]
+    "xl_pack": [ "xl_vanila", "xl_lora_12_step", "xl_lora_noffset", "clip_base", "ipa_xl", "brushnet_rand", "brushnet_segm", "ipa_xl_plus_face"],
+    "zimg_pack": [ "qwen_3_4b", "z_image_turbo_bf16", "zimg_vea"]
 }

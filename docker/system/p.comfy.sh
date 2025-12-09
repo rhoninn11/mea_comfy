@@ -1,9 +1,9 @@
 #!/bin/bash
 
-COMFY_VER="v0.2.3"
+COMFY_VER="v0.3.75"
 COMFY_REPO="https://github.com/comfyanonymous/ComfyUI.git"
 
-COMFY_MNG_VER="2.50.1"
+COMFY_MNG_VER="3.37"
 COMFY_MNG_REPO="https://github.com/ltdrdata/ComfyUI-Manager.git"
 
 COMFY_SCRIPT_VER="v0.5.1"
@@ -34,12 +34,12 @@ install_comfy() {
         git clone --branch $COMFY_SCRIPT_VER --single-branch $COMFY_SCRIPT_REPO $CSCRIPT_DIR
     fi
     
-    NAME="ComfyUI_IPAdapter_plus"
-    ADAPTER_DIR="$DIR_PLUGINS/$NAME"
-    if [ ! -d "$ADAPTER_DIR" ]; then
-        echo "Cloning $NAME..."
-        git clone --single-branch $IPADAPTERS_REPO $ADAPTER_DIR
-    fi
+    # NAME="ComfyUI_IPAdapter_plus"
+    # ADAPTER_DIR="$DIR_PLUGINS/$NAME"
+    # if [ ! -d "$ADAPTER_DIR" ]; then
+    #     echo "Cloning $NAME..."
+    #     git clone --single-branch $IPADAPTERS_REPO $ADAPTER_DIR
+    # fi
 
     # ComfyUI_essentials...
     # ComfyUI_brushnet
@@ -50,15 +50,15 @@ install_comfy() {
     pip install -r requirements.txt
     cd $MANAGER_DIR
     pip install -r requirements.txt
-    cd $ADAPTER_DIR
-    pip install -r requirements.txt
+    # cd $ADAPTER_DIR
+    # pip install -r requirements.txt
     cd $CSCRIPT_DIR
-    python -m pip install -e ".[default]"
-    pip install --upgrade transformers==4.45.0
-    pip install --upgrade numpy==1.26.4
-    pip install --upgrade peft==0.15.0
-    pip install --upgrade accelerate==0.29.0
-    pip install --upgrade diffusers==0.29.0
+    pip install -e ".[default]"
+    # pip install --upgrade transformers==4.45.0
+    # pip install --upgrade numpy==1.26.4
+    # pip install --upgrade peft==0.15.0
+    # pip install --upgrade accelerate==0.29.0
+    # pip install --upgrade diffusers==0.29.0
 
     cd $ADAPTER_DIR
     python cm_cli.py install ComfyUI_essentials

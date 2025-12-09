@@ -3,7 +3,7 @@ import os
 
 MODEL_FILE = "assets/comfy/models.json"
 PCKG_FILE = "assets/comfy/model_pckg.json"
-PACK_NAME = "xl_pack"
+PACK_NAME = "zimg_pack"
 
 yes = os.path.exists(MODEL_FILE) and os.path.exists(PCKG_FILE)
 if not yes:
@@ -11,9 +11,9 @@ if not yes:
     print("try to run from root directory")
     exit()
 
-COMFY_PATH = os.getenv('COMFY')
+COMFY_PATH = os.getenv('DIR_COMFY_UI')
 if COMFY_PATH is None:
-    print("!!! path to ComfyUI must be set in env variable 'COMFY'")
+    print("!!! path to ComfyUI must be set in env variable 'DIR_COMFY_UI'")
     exit()
 
 

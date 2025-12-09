@@ -2,9 +2,9 @@ services:
   comfy_ui:
     container_name: c_mea_comfy
     image: img_mea_comfy
-    # By default Part-DB will be running under Port 8080, you can change it here
+    
     ports:
-      - '8188:8188'
+      - '8189:8189'
       - '11434:11434'
       - '50051:50051'
     deploy:
@@ -14,18 +14,15 @@ services:
           - driver: nvidia
             device_ids: ['0']
             capabilities: [gpu]
+    environment:
+      DIR_MEA_COMFY: /workspace
     volumes:
       # ai models
       - $COMFY/models:/mea/comfy_ui/models
-      - $OLLAMA/models:/root/.ollama/models
+      # - $OLLAMA/models:/root/.ollama/models
       
       # dev
-      # - $MEA/src:/mea/mea_comfy/src
-      # - $MEA/proto:/mea/mea_comfy/proto
-      # - $MEA/assets:/mea/dev_bridge/assets
-      # - $MEA/misc:/mea/dev_bridge/misc
-      # - $MEA:/mea/mea_comfy
-      - ../:/mea/mea_comfy
+      - ../:/workspace
 
       # for gui comfy ui
       # - $MEA/fs/docker/plug_snap:/mea/comfy_ui/custom_nodes/ComfyUI-Manager/snapshots
@@ -33,4 +30,4 @@ services:
       - ./system:/mea/system
 
     # command: /mea/system/cmds.sh
-    command: sleep 10000
+    command: sleep 10000 && export DIR_MEA_COMFY=/workspace

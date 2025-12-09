@@ -1,8 +1,16 @@
+UV_VER="0.9.1"
+PY_VER="3.11"
+uv_install() {
+    SCRIPT="uv-installer.sh"
+    wget https://github.com/astral-sh/uv/releases/download/${UV_VER}/${SCRIPT}
+    chmod +x ${SCRIPT}
+    ./${SCRIPT}
+}
 
-
-
-install_python() {
-    python -m pip install --upgrade pip
+uv_venv() {
+    uv venv ${VENV_DIR} --python ${PY_VER}
+    echo source $VENV_DIR/bin/activate >> /root/.bashrc
+    # echo alias 'pip="uv pip"' >> /root/.bashrc
 }
 
 VENV_DIR="/venv_global"
@@ -13,9 +21,4 @@ pip_install_heavy() {
     pip install torchsde
 }
 
-spawn_venv() {
-    ln -s /usr/bin/python3 /usr/bin/python
-    python -m venv ${VENV_DIR}
-    echo source $VENV_DIR/bin/activate >> /root/.bashrc
-}
 

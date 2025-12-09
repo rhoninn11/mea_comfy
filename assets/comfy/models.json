@@ -149,6 +149,25 @@
             "link": "https://huggingface.co/grzelakadam/brushnet_xl_models/resolve/main/segmentation_mask_brushnet_ckpt_sdxl_v0.safetensors",
             "file": "segmentation_mask_brushnet.safetensors",
             "dst": "inpaint"
+        },
+        {
+            "name": "qwen_3_4b",
+            "link": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors",
+            "file": "qwen_3_4b.safetensors",
+            "dst": "text_encoder"
+        },
+        {
+            "name": "z_image_turbo_bf16",
+            "link": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/diffusion_models/z_image_turbo_bf16.safetensors",
+            "file": "z_image_turbo_bf16.safetensors",
+            "dst": "diffusion_models"
+        },
+        {
+            "name": "zimg_vea",
+            "link": "https://huggingface.co/Comfy-Org/z_image_turbo/resolve/main/split_files/vae/ae.safetensors",
+            "file": "ae.safetensors",
+            "dst": "vae"
+
         }
     ]
 }
