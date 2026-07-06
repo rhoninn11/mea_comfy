@@ -84,6 +84,12 @@
             "dst": "checkpoints"
         },
         {
+            "name": "flux_krea",
+            "link": "https://huggingface.co/Comfy-Org/FLUX.1-Krea-dev_ComfyUI/resolve/main/split_files/diffusion_models/flux1-krea-dev_fp8_scaled.safetensors",
+            "file": "flux1-krea-fp8.safetensors",
+            "dst": "diffusion_models"
+        },
+        {
             "name": "flux_paint_cnet",
             "link": "https://huggingface.co/alimama-creative/FLUX.1-dev-Controlnet-Inpainting-Alpha/resolve/main/diffusion_pytorch_model.safetensors",
             "file": "flux1-inpaint.safetensors",

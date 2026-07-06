@@ -1,7 +1,7 @@
 services:
   comfy_ui:
     container_name: c_mea_comfy
-    image: img_mea_comfy
+    image: img_mea_comfy${IMG_SUFIX}
     
     ports:
       - '8189:8189'

@@ -27,11 +27,11 @@ python_llm:
 mea_client:
 	python main.py -client
 
-mea_server:
+serve:
 	python main.py -server
 
-serv:
-	@cd docker && make up_service
+# serv:
+# 	@cd docker && make up_service
 
 mea_server_docker:
 	cd docker && docker exec -it comfy_no_0 bash --login -c "start_mea_comfy"

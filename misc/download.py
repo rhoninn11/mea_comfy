@@ -3,7 +3,9 @@ import os
 
 MODEL_FILE = "assets/comfy/models.json"
 PCKG_FILE = "assets/comfy/model_pckg.json"
-PACK_NAME = "zimg_pack"
+# PACK_NAME = "zimg_pack"
+# PACK_NAME = "xl_pack"
+PACK_NAME = "flux_pack"
 
 yes = os.path.exists(MODEL_FILE) and os.path.exists(PCKG_FILE)
 if not yes:

@@ -60,12 +60,12 @@ install_comfy() {
     # pip install --upgrade accelerate==0.29.0
     # pip install --upgrade diffusers==0.29.0
 
-    cd $ADAPTER_DIR
-    python cm_cli.py install ComfyUI_essentials
-    python cm_cli.py install ComfyUI-Custom-Scripts
-    # python cm_cli.py install ComfyUI_Brushnet
+    cd $MANAGER_DIR
+    python cm-cli.py install ComfyUI_essentials
+    python cm-cli.py install ComfyUI-Custom-Scripts
+    # python cm-cli.py install ComfyUI_Brushnet
     #       trzeba będzie mu cofnąć commita
-    # python cm_cli.py install comfyui_controlnet_aux
+    # python cm-cli.py install comfyui_controlnet_aux
 
     echo "+++ ComfyUI setup finished"
     # pip install torch==2.7.0 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/cu126

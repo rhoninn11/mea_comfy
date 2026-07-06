@@ -1,0 +1,13 @@
+FROM debian:bookworm AS base
+
+RUN apt update
+RUN apt install -y \
+    neovim git \
+    curl wget
+
+SHELL ["/bin/bash", "-lc"]
+WORKDIR /pod
+
+COPY install_sh/uv.sh ./uv.sh
+RUN source uv.sh && install
+RUN source uv.sh && uv_venv
